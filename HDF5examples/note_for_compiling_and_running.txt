@@ -1,0 +1,15 @@
+COMPILE HDF5 LIB WITH MPI SUPPORT (note option --without-zlib, this excludes the zlib library which was giving troubles, even tough in this way it is not optimized.)
+
+sudo CC=mpicc ./configure --prefix=/usr/local/hdf5-1.8.11/hdf5 --without-zlib
+sudo make
+sudo make install
+
+
+COMPILE
+
+mpicc ind_test.c -lhdf5 -I /usr/local/hdf5-1.8.11/hdf5/include/ -L /usr/local/hdf5-1.8.11/hdf5/lib/
+
+
+RUN
+
+mpirun -np 8 a.out 

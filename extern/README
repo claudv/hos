@@ -1,0 +1,9 @@
+THESE ARE CONFIGURATIONS USED ON FIONN TO COMPILE fftw AND dhf5 LIBRARIES WITH MPI SUPPORT.
+
+FFTW:
+
+./configure F77=ifort CC=icc CXX=icpc CFLAGS='-O3 -xAVX -axCORE-AVX-I' FFLAGS=-O3 MPICC=mpiicc --prefix=/ichec/home/users/viotti/2dpar/fftw --enable-mpi --enable-threads
+
+HDF5:
+
+./configure CC=mpiicc --enable-parallel --prefix=/ichec/home/users/viotti/2dpar/hdf5-1.8.11/hdf5/ --without-zlib
