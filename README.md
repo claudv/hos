@@ -4,6 +4,7 @@ Contents:
 
 -- Source files
 -- XCode project
+-- matlab utilities for pre- and post-processing
 
 This software uses two external libraries:
 
