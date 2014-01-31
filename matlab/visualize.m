@@ -11,7 +11,7 @@ SimFolder = '/Users/Claudio/rw/hos/data/1';
 
 
 for nfield=[0:1:4000];
-    
+    %sfsafd
     
     time =h5read([SimFolder,'/data',num2str(nfield),'.1.h5'],'/time');
     
