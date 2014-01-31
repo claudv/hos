@@ -1,3 +1,5 @@
+% Called by StokesWave.m to compute Stokes waves.
+
 function [ f ] = Fun(eta, c, k, ka)
     
     heta = fft(eta);

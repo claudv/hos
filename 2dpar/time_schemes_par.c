@@ -8,6 +8,16 @@
 
 #include "time_schemes_par.h"
 
+/* Coeffs for RK routines and other storage room */
+static int             Nstages;
+static double*         a;
+static double*         bElem;
+static double*         c;
+static double*         cs;
+static double**        b;
+static fftw_complex    *htemp;
+static fftw_complex    *fun;
+
 
 void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
     

@@ -1,6 +1,7 @@
+% The maximum amplidue (amp) for a Stokes wave is around 0.44
+
 function [ eta, phi, phi_x, w, c ] = StokesWave(amp, kap, L, N, t)
-    
-    % max amp around 0.44
+     
     g=1;
     dxi = L/N;
     xi = (0:N-1)'*dxi;	

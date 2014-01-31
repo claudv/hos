@@ -9,6 +9,17 @@
 
 #include "model_2d_par.h"
 
+
+//static double*  eta_x;
+//static double*  phi_x;
+static fftw_complex*   hwn;
+static fftw_complex*   hwM;
+static fftw_complex*   hwM2;
+static fftw_complex*   hw2M;
+static fftw_complex*   hw2M2;
+static double*         Coeff;
+
+
 void rhs_test(fftw_complex* hrhs, fftw_complex* hu){
 
     // Linear advection
@@ -18,13 +29,12 @@ void rhs_test(fftw_complex* hrhs, fftw_complex* hu){
 }
 
 
-
 void rhs_hos_setup(){
 
     int n;
     
-    eta_x = fftw_alloc_real(2 * alloc_local);
-    phi_x = fftw_alloc_real(2 * alloc_local);
+//    eta_x = fftw_alloc_real(2 * alloc_local);
+//    phi_x = fftw_alloc_real(2 * alloc_local);
     
     temp1 = fftw_alloc_real(2 * alloc_local);
     temp2 = fftw_alloc_real(2 * alloc_local);
@@ -233,7 +243,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_co
 
     }
 
-    //hZvelM2
+    /* hZvelM2 */
     for (n=0; n<=(NLevs-2); n++) {
             
         for (i=0; i<local_N; i++) {
@@ -244,7 +254,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_co
     
     }
     
-    //hZvelM
+    /* hZvelM */
     for (i=0; i<local_N; i++) {
 
         hZvelM[i] = hZvelM2[i];
@@ -261,7 +271,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_co
 
     }
 
-    //hZvel2M2
+    /* hZvel2M2 */
     for (n=0; n<=(NLevs-3); n++) {
         
 //        for (i=0; i<local_N; i++) {
@@ -271,7 +281,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_co
 //        }
 
 
-        // W2^(n) = W^(0)*W^(n) + W^(1)*W^(n-1) + ... W^(n)*W^(0)
+        /* W2^(n) = W^(0)*W^(n) + W^(1)*W^(n-1) + ... W^(n)*W^(0) */
         for (m=0; m<=n; m++) {
         
             Mult(&hwn[m*alloc_local], &hwn[(n-m)*alloc_local], htemp1);
@@ -291,7 +301,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_co
     }
     
     
-    //hZvel2M
+    /* hZvel2M */
     for (i=0; i<local_N; i++) {
 
         hZvel2M[i] = hZvel2M2[i];
@@ -307,7 +317,7 @@ void Zvel(fftw_complex* hu, fftw_complex* hZvelM, fftw_complex* hZvelM2, fftw_co
 //        }
 
 
-        // W2^(n) = W^(0)*W^(n) + W^(1)*W^(n-1) + ... W^(n)*W^(0)
+        /* W2^(n) = W^(0)*W^(n) + W^(1)*W^(n-1) + ... W^(n)*W^(0) */
         for (m=0; m<=n; m++) {
             
             Mult(&hwn[m*alloc_local], &hwn[(n-m)*alloc_local], htemp1);

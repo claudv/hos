@@ -7,7 +7,6 @@
 //
 
 #define DIM 3
-#define M 2
 #define BUFSIZE 256
 #define INIT_DATA_BUFSIZE 128
 #define EPSILON 0.00000001
@@ -83,7 +82,7 @@ int main(int argc, char **argv)
     if (mpi_rank==0) {
         printf("Reading initial data from:\t%s\n",init_data_buff);
     }
-    
+    MPI_Barrier(comm);
    
     nfld = 0;
     strncpy(savefile_buff,"\0",SAVE_FILE_BUFSIZE);
@@ -102,12 +101,6 @@ int main(int argc, char **argv)
     strcat(savefile2_buff,subid_buff);
     strcat(savefile2_buff,".h5");
 
-    
-      
-    g=1;
-    NLevs=M;
-    
-    
     
     fNx=Nx;
     fNy=Ny;
@@ -154,8 +147,8 @@ int main(int argc, char **argv)
     hvelw2M  = fftw_alloc_complex(alloc_local);
     hvelw2M2 = fftw_alloc_complex(alloc_local);
     
-    /* Setup fft routines */
     
+    /* Setup fft routines */
 #if THREADS == 1
     if (threads_ok) fftw_plan_with_nthreads(N_THREADS);
 #endif
@@ -221,7 +214,7 @@ int main(int argc, char **argv)
         
         t_old = t;
         
-        dt = 0.05/32;
+        dt = 0.2;
         
         sol_update_RK(heta,&t,dt,dtflag);
         //t = t + dt;

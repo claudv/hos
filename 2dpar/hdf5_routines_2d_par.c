@@ -9,6 +9,7 @@
 #include "hdf5_routines_2d_par.h"
 #include "fft_routines_2d_par.h"
 
+
 void get_params(char* filename){
     
     hid_t       h5_file, h5_data;
@@ -18,42 +19,64 @@ void get_params(char* filename){
     
     h5_file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
     
+    /* Nx */
     h5_data = H5Dopen(h5_file, "/Nx", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
     
     Nx = (int) Nd[0];
     
+    /* Ny */
     h5_data = H5Dopen(h5_file, "/Ny", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
     
     Ny = (int) Nd[0];
     
+    /* Lx */
     h5_data = H5Dopen(h5_file, "/Lx", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Lx);
+    
+    /* Ly */
     h5_data = H5Dopen(h5_file, "/Ly", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Ly);
     
+    /* g  */
+    h5_data = H5Dopen(h5_file, "/g", H5P_DEFAULT);
+    status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &g);
+    
+    /* runsubid */
     h5_data = H5Dopen(h5_file, "/runsubid", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
 
     runsubid = (int) Nd[0];
 
+    /* T */
     h5_data = H5Dopen(h5_file, "/T", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &T);
     
+    /* dtsave */
     h5_data = H5Dopen(h5_file, "/dtsave", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &dtsave);
     
+    /* saveflg */
     h5_data = H5Dopen(h5_file, "/saveflg", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
     
     saveflg = (int) Nd[0];
     
+    /* rampflg */
     h5_data = H5Dopen(h5_file, "/rampflg", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
     
     rampflg = (int) Nd[0];
     
+    if ( rampflg!=0 && rampflg!=1 ) {
+    
+        printf("Illegal value assigned to rampflag, setting to default value (0).\n");
+        rampflg = 0;
+    
+    }
+    
+    /* Tramp */
     h5_data = H5Dopen(h5_file, "/Tramp", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Tramp);
    
@@ -93,7 +116,7 @@ void get_ic_2d(char* filename, double* u1, double* u2){
     h5_filespace = H5Dget_space(h5_dataset);
     H5Sselect_hyperslab(h5_filespace, H5S_SELECT_SET, offset, NULL, count, NULL);
     
-    /* Read data and write it inside a temporary array, then copy in the padded target array */
+    /* Read data and write it inside a temporary array, then copy the data inside the padded target array */
     status = H5Dread(h5_dataset, H5T_IEEE_F64LE, h5_memspace, h5_filespace, H5P_DEFAULT, temp1);
     
     for (i=0; i<local_Nx; i++) {
@@ -112,7 +135,7 @@ void get_ic_2d(char* filename, double* u1, double* u2){
     h5_filespace = H5Dget_space(h5_dataset);
     H5Sselect_hyperslab(h5_filespace, H5S_SELECT_SET, offset, NULL, count, NULL);
     
-    /* Read data and write it inside a temporary array, then copy in the padded target array */
+    /* Read data and write it inside a temporary array, then copy the data inside the padded target array */
     status = H5Dread(h5_dataset, H5T_IEEE_F64LE, h5_memspace, h5_filespace, H5P_DEFAULT, temp1);
     
     for (i=0; i<local_Nx; i++) {
@@ -186,7 +209,7 @@ void write_header_2d(hid_t file, double time){
     hsize_t     fdim [2];
     double      var;
     
-    /* For some reason we get a deadlock of only on process executes this part */
+    /* For some reason we get a deadlock of only one process executes this part */
     //if (mpi_rank==0) {
   
         fdim[0]=1;
@@ -197,6 +220,11 @@ void write_header_2d(hid_t file, double time){
         var = time;
         data = H5Dcreate(file, "time", H5T_IEEE_F64LE, fid, H5P_DEFAULT,H5P_DEFAULT, H5P_DEFAULT);
         status = H5Dwrite(data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,&var);
+        status = H5Dclose(data);
+
+        var = g;
+        data = H5Dcreate(file, "g", H5T_IEEE_F64LE, fid, H5P_DEFAULT,H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Dwrite(data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,&g);
         status = H5Dclose(data);
 
         var = (double) Nx;

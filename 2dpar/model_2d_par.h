@@ -13,9 +13,8 @@
 
 #ifndef euler_model_h
 #define euler_model_h
-
-
 #endif
+
 
 void rhs_test(fftw_complex* rhs, fftw_complex* u);
 void rhs_hos(fftw_complex* rhs, fftw_complex* u, double t);

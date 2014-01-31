@@ -22,11 +22,17 @@
 
 #define FFT_TRANSPOSE 1
 
+#define NLevs 2 // Number of levels used in the HOS expansion.
+                // Particular cases are:
+                // Nlev=0 --> linear waves;
+                // Nlev=2 --> Zakharov equations.
+
+
 ///////////////////////
 /* Global variables. */
 
 
-/* Parameters */
+/* Main parameters */
 int             Nx;
 int             Ny;
 //ptrdiff_t       N;
@@ -40,17 +46,22 @@ double          g;
 
 double          T;
 double          dtsave;
-int             saveflg;    // =1 -> basic output, >1 -> extra output
+int             saveflg;    // =1 -> basic output, >1 -> extended output
 
-/* Dommermuth ramping */
-int             rampflg;
-double          Tramp;
+fftw_complex*   hetan;
+fftw_complex*   hphin;
 
-/* MPI variables */
+
+/* MPI related variables */
 int         mpi_size;
 int         mpi_rank;
 MPI_Comm    comm;
 MPI_Info    info;
+
+
+/* Dommermuth ramping */
+int         rampflg;
+double      Tramp;
 
 
 /* Definitions global for debugging pourpose */
@@ -60,43 +71,17 @@ char        savefile_buff[SAVE_FILE_BUFSIZE];
 char        savefile2_buff[SAVE_FILE_BUFSIZE];
 herr_t      status;
 
-/* Coeffs for RK routines */
-int             Nstages;
-double*         a;
-double*         bElem;
-double*         c;
-double*         cs;
-double**        b;
-fftw_complex    *htemp;
-fftw_complex    *fun;
 
-
-/* Working space for assembling rhs and dealiasing */
-double*         eta_x;
-double*         phi_x;
-
+/* Global arrays for temporary storage */
 double*         temp1;
 double*         temp2;
-
 fftw_complex*   htemp1;
 fftw_complex*   htemp2;
-
-
-/* Variables used in computing vertical velocity */
-int             NLevs;
-double*         Coeff;
-fftw_complex*   hetan;
-fftw_complex*   hphin;
-fftw_complex*   hwn;
-fftw_complex*   hwM;
-fftw_complex*   hwM2;
-fftw_complex*   hw2M;
-fftw_complex*   hw2M2;
 
 
 /* Runtime datafile */
 char        runtime_data_buff[RUNTIME_DATA_BUFSIZE];
 FILE*       runtime_fid;
-double       Ham;
-double       Ham_glob;
+double      Ham;
+double      Ham_glob;
 
