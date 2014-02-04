@@ -31,7 +31,7 @@ ptrdiff_t j;
 ptrdiff_t fNx;
 ptrdiff_t fNy;
 
-void fft_2d(double* u, fftw_complex* hu, fftw_plan plan);
-void ifft_2d(fftw_complex* hu, double* u, fftw_plan plan);
+void fft_2d(const double* u, fftw_complex* hu, fftw_plan plan);
+void ifft_2d(const fftw_complex* hu, double* u, fftw_plan plan);
 void fft_2d_large(double* u, fftw_complex* hu, fftw_plan plan);
 void ifft_2d_large(fftw_complex* hu, double* u, fftw_plan plan);

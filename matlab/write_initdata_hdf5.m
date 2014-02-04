@@ -144,6 +144,9 @@ h5write(hdf5File, '/Lx', Lx);
 h5create(hdf5File,'/Ly',[1 1]);
 h5write(hdf5File, '/Ly', Ly);
 
+h5create(hdf5File,'/g',[1 1]);
+h5write(hdf5File, '/g', g);
+
 h5create(hdf5File,'/T',[1 1]);
 h5write(hdf5File, '/T', T);
 
@@ -155,6 +158,13 @@ h5write(hdf5File, '/saveflg', 2);
 
 h5create(hdf5File,'/runsubid',[1 1]);
 h5write(hdf5File, '/runsubid', runsubid);
+
+h5create(hdf5File,'/rampflg',[1 1]);
+h5write(hdf5File, '/rampflg', 1);
+
+h5create(hdf5File,'/Tramp',[1 1]);
+h5write(hdf5File, '/Tramp', 60);
+
 
 
 hdf5File  = [num2str(runid),'/initdata.',num2str(runsubid),'.h5'];

@@ -6,9 +6,6 @@
 //  Copyright (c) 2013 Claudio Viotti. All rights reserved.
 //
 
-
-#include "euler_2d_par.h"
-#include "fft_routines_2d_par.h"
 #include "operators_par.h"
 
 #ifndef euler_model_h

@@ -24,7 +24,6 @@
 #include "operators_par.h"
 
 
-
 #if THREADS == 1
    int threads_ok;
 #endif
@@ -188,7 +187,8 @@ int main(int argc, char **argv)
     /* Save initial snapshot */
     savefileid = create_file_2d(savefile_buff);
     write_header_2d(savefileid, t);
-    write_field_2d(savefileid, eta, phi);
+    //write_field_2d(savefileid, eta, phi);
+    write_field_complex_2d(savefileid, heta, hphi);
     status = close_file_2d(savefileid);
     
     if (mpi_rank == 0) {
@@ -218,6 +218,7 @@ int main(int argc, char **argv)
         
         sol_update_RK(heta,&t,dt,dtflag);
         //t = t + dt;
+    
     
         if ( floor(t*(1+EPSILON)/dtsave) > floor(t_old*(1+EPSILON)/dtsave) ){
             

@@ -356,11 +356,11 @@ double Hamiltonian(const fftw_complex* heta, const fftw_complex* heta_t, const f
     /* j=0 */
     for (i=0; i < Nx; i++) {
             
-        H = H + creal(heta[i])*creal(heta[i]);
-        H = H + cimag(heta[i])*cimag(heta[i]);
+        H += g*creal(heta[i])*creal(heta[i]);
+        H += g*cimag(heta[i])*cimag(heta[i]);
 
-        H = H + creal(hphi[i])*creal(heta_t[i]);
-        H = H + cimag(hphi[i])*cimag(heta_t[i]);
+        H += creal(hphi[i])*creal(heta_t[i]);
+        H += cimag(hphi[i])*cimag(heta_t[i]);
         
     }
     
@@ -370,11 +370,11 @@ double Hamiltonian(const fftw_complex* heta, const fftw_complex* heta_t, const f
             
             index = Nx*j + i;
 
-            H = H + 2*creal(heta[index])*creal(heta[index]);
-            H = H + 2*cimag(heta[index])*cimag(heta[index]);
+            H += 2*g*creal(heta[index])*creal(heta[index]);
+            H += 2*g*cimag(heta[index])*cimag(heta[index]);
 
-            H = H + 2*creal(hphi[index])*creal(heta_t[index]);
-            H = H + 2*cimag(hphi[index])*cimag(heta_t[index]);
+            H += 2*creal(hphi[index])*creal(heta_t[index]);
+            H += 2*cimag(hphi[index])*cimag(heta_t[index]);
 
         }
         

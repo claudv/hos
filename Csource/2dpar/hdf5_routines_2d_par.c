@@ -335,6 +335,197 @@ void write_field_2d(hid_t h5_file, double* eta, double* phi){
 }
 
 
+/* THESE NEED TO BE MADE GLOBAL */
+static ptrdiff_t mx, my;
+
+
+/* Function that checks whether the global index "index" lies inside (returns 0) or outside (returns 1) the dealiased region. */
+ptrdiff_t IsOutside(ptrdiff_t index){ return (index >= mx)*(index <= Nx-mx-1); };
+
+
+/* Local static defnition of a fftw plan to be used inside write_field_complex_2d() for untransposing fftw arrays. */
+static fftw_plan fftp_untrsp;
+static ptrdiff_t alloc_local_untrsp;
+static ptrdiff_t local_Nx_untrsp;
+static ptrdiff_t local_N_untrsp;
+static ptrdiff_t local_0_start_untrsp;
+
+enum initstatus{
+
+    false,
+    true
+
+};
+
+
+/* Initialize the fftw planning for transposed output on the first call of write_field_complex_2d(). */
+void write_field_complex_2d_init(){
+
+    static enum initstatus initialized = false;
+    
+    if (initialized==false) {
+        
+        fftp_untrsp = fftw_mpi_plan_dft_r2c_2d(fNx, fNy, f, hf, MPI_COMM_WORLD, FFTW_MEASURE);
+        alloc_local_untrsp = fftw_mpi_local_size_2d(fNx, fNy/2+1, MPI_COMM_WORLD, &local_Nx_untrsp, &local_0_start_untrsp);
+        local_N_untrsp = local_Nx_untrsp*(Ny/2 + 1);
+        initialized = true;
+    }
+
+}
+
+
+void write_field_complex_2d(hid_t h5_file, const fftw_complex* heta, const fftw_complex* phi){
+    
+
+    hid_t       h5_dataset, h5_memspace, h5_filespace;
+    herr_t      status;
+    hid_t       plist_id;
+    hsize_t     dimsf[2], count[2], offset[2];
+    ptrdiff_t   lbd, rbd; // local indexes of the left and right boundaries of the portion of the local complex array contained inside the dealiased region.
+    
+    hsize_t *   count_0_gathered;
+    count_0_gathered = malloc(mpi_size*sizeof(hsize_t));
+    
+    plist_id = H5Pcreate(H5P_DATASET_XFER);
+    
+    mx = floor( 0.5*Nx/(1 + 0.5*NLevs) );
+    my = floor( 0.5*Ny/(1 + 0.5*NLevs) );
+    
+    
+    /* Untranpose data if FFT_TRANSPOSE == 1, by doing ifft and untransposed fft */
+#if FFT_TRANSPOSE == 1
+    write_field_complex_2d_init();
+
+    ifft_2d(heta, temp1, ifftp);
+    
+    for (i=0; i<local_Nx_untrsp; i++) {
+        
+        for (j=0; j<Ny; j++) {
+            
+            /* Copy real data inside f skipping padded elements. */
+            /* (Note the Ny+2 striding over the first dimension) */
+            f[(fNy+2)*i + j]=temp1[(fNy+2)*i + j];
+            
+        }
+        
+    }
+    
+    fftw_execute(fftp_untrsp);
+    
+    for (i=0; i<local_N_untrsp; i++) {
+        
+        htemp1[i] = hf[i]/Nx/Ny;
+        
+    }
+#elif FFT_TRANSPOSE == 0
+   for (i=0; i<local_N; i++) {
+        
+        htemp1[i] = heta[i];
+        
+    }
+#endif
+    
+
+    lbd = ( Nx - mx - local_0_start)*IsOutside(local_0_start);
+    rbd = local_Nx - 1 + (mx - local_0_start - local_Nx)*IsOutside(local_0_start+local_Nx-1);
+    
+    /* Compute count, the size of the local data slab to write. */
+    /* If rbd<lbd this chuck has nothing. */
+    //count[0] = (rbd - lbd + 1)*(rbd - lbd > 0);
+    count[0] = local_Nx*(rbd - lbd > 0);
+    count[1] = my;
+    
+    /* Compute the offset by receving values of count[0] from other processes.               */
+    /* This is necessary because the size is not guaranteed to be the same for all processes.*/
+    MPI_Barrier(comm);
+    MPI_Allgather(count, 1, MPI_UNSIGNED_LONG_LONG, count_0_gathered, 1, MPI_UNSIGNED_LONG_LONG, comm);
+    
+    offset[0] = 0;
+    
+    for (int p_index=0; p_index<mpi_rank; p_index++) {
+    
+        offset[0] += count_0_gathered[p_index];
+    
+    }
+    
+    offset[1] = 0;
+    
+    /* Compute global size of the filespace */
+    dimsf[0] = 0;
+    
+    for (int p_index=0; p_index<mpi_size; p_index++) {
+    
+        dimsf[0] += count_0_gathered[p_index];
+        
+    }
+    
+    dimsf[1] = my;
+    
+    //printf("process %d, dimsf %lld, count %lld, offset %lld \n",mpi_rank,dimsf[0],count[0],offset[0]);
+    
+    /* heta */
+    h5_filespace = H5Screate_simple(RANK, dimsf, NULL);
+    h5_dataset = H5Dcreate(h5_file, "heta_r", H5T_IEEE_F64LE, h5_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Sclose(h5_filespace);
+
+    h5_memspace = H5Screate_simple(RANK, count, NULL);
+    h5_filespace = H5Dget_space(h5_dataset);
+    H5Sselect_hyperslab(h5_filespace, H5S_SELECT_SET, offset, NULL, count, NULL);
+    
+    plist_id = H5Pcreate(H5P_DATASET_XFER);
+    
+    /* Copy data inside a temporary array to remove padding, then write inside the datafile. */
+    for (i=0; i<count[0]; i++) {
+        
+        for (j=0; j<my; j++) {
+            
+            temp1[my*i + j] = creal(htemp1[(Ny/2+1)*i + j]);
+        
+        }
+        
+    }
+    
+    status = H5Dwrite(h5_dataset, H5T_IEEE_F64LE, h5_memspace, h5_filespace, plist_id, temp1);
+   
+    H5Dclose(h5_dataset);
+    H5Sclose(h5_filespace);
+    H5Sclose(h5_memspace);
+    H5Pclose(plist_id);
+    
+//    // hphi //
+//    h5_filespace = H5Screate_simple(RANK, dimsf, NULL);
+//    h5_dataset = H5Dcreate(h5_file, "phi", H5T_IEEE_F64LE, h5_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+//    H5Sclose(h5_filespace);
+//    
+//    h5_memspace = H5Screate_simple(RANK, count, NULL);
+//
+//    h5_filespace = H5Dget_space(h5_dataset);
+//    H5Sselect_hyperslab(h5_filespace, H5S_SELECT_SET, offset, NULL, count, NULL);
+//    
+//    plist_id = H5Pcreate(H5P_DATASET_XFER);
+//    
+//    /* Copy data inside a temporary array to remove padding, then write inside the datafile */
+//    for (i=0; i<local_Nx; i++) {
+//        
+//        for (j=0; j<Ny; j++) {
+//            
+//            temp1[Ny*i + j] = phi[(Ny+2)*i + j];
+//            
+//        }
+//        
+//    }
+//    
+//    status = H5Dwrite(h5_dataset, H5T_IEEE_F64LE, h5_memspace, h5_filespace, plist_id, temp1);
+//       
+//    H5Dclose(h5_dataset);
+//    H5Sclose(h5_filespace);
+//    H5Sclose(h5_memspace);
+//    H5Pclose(plist_id);
+    
+    
+}
+
+
 void write_extra_2d(hid_t h5_file, double* array1, double* array2){
     
 

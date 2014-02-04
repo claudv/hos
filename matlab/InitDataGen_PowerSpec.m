@@ -27,16 +27,16 @@ Ny = 4096/4;		% Number of Fourier modes in y
 kx = 2*pi/Lx*[-Nx/2:Nx/2-1];
 ky = 2*pi/Ly*[-Ny/2:Ny/2-1];
 
-%SpectrumType = 'Fourier';
-SpectrumType = 'Directional';
+SpectrumType = 'Fourier';
+%SpectrumType = 'Directional';
 
 switch SpectrumType
     
     case('Fourier')
     
 	% Gaussian spectrum UNSCALED!
-	k_p = 2*pi/100;
-	delta_k = 0.2*k_p;
+	k_p = 2*pi/150;
+	delta_k = 0.2;
 	epsilon = 0.1;
 	sigma = epsilon/sqrt(2)/k_p;
 
@@ -78,7 +78,6 @@ switch SpectrumType
 	hphir(2:end,2:Nx/2)  = conj(rot90(hphir(2:end,Nx/2+2:end),2));
 
 	hphir(Ny/2+1,Nx/2+1) = 0;
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 case('Directional')
 
@@ -215,7 +214,8 @@ set(gca,'YDir','normal');
 %%% Write hdf5 datafile
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-SimFolder = '/Users/Claudio/rw/hos/data/1/';
+%SimFolder = '/Users/Claudio/rw/hos/data/1/';
+SimFolder = '/Users/Claudio/rw/hos/Csource/2dpar/';
 
 hdf5File  = [SimFolder, 'initpars.h5'];
 unix(['rm ', hdf5File]);
@@ -248,7 +248,7 @@ h5create(hdf5File,'/runsubid',[1 1]);
 h5write(hdf5File, '/runsubid', runsubid);
 
 h5create(hdf5File,'/rampflg',[1 1]);
-h5write(hdf5File, '/rampflg', 1);
+h5write(hdf5File, '/rampflg', 0);
 
 h5create(hdf5File,'/Tramp',[1 1]);
 h5write(hdf5File, '/Tramp', 60);

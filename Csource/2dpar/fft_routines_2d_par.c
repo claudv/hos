@@ -9,7 +9,7 @@
 #include "fft_routines_2d_par.h"
 
 
-void fft_2d(double* u, fftw_complex* hu, fftw_plan plan){
+void fft_2d(const double* u, fftw_complex* hu, fftw_plan plan){
     
     
     for (i=0; i<local_Nx; i++) {
@@ -49,7 +49,7 @@ void fft_2d(double* u, fftw_complex* hu, fftw_plan plan){
 }
 
 
-void ifft_2d(fftw_complex* hu, double* u, fftw_plan plan){
+void ifft_2d(const fftw_complex* hu, double* u, fftw_plan plan){
     
     
 //    for (i=0; i<local_Nx; i++) {

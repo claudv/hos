@@ -20,12 +20,68 @@
 #define SAVE_FILE_BUFSIZE 128
 #define RUNTIME_DATA_BUFSIZE 32
 
+/*----------------------------------------------------------------------------------------------------------*/
+/* Choose between the standard untransposed (FFT_TRANSPOSE = 0) or the faster transposed (FFT_TRANSPOSE = 1)*/
+/* fftw output format. The Fourier coefficients are distributed differently across the parallel processes   */
+/*                                                                                                          */
+/*  REGULAR OUTPUT (row-major ordered in memory):                                                           */
+/*                                                                                                          */
+/*  0 1 ...                                  ... Ny/2   \                                                   */
+/*  .                                               .    |                                                  */
+/*  .                                                    |  process 0                                       */
+/*  local_Nx - 1                                         |                                                  */
+/*  .                                               .    |     | padding (internal fftw use only)           */
+/*  .                                               .   /      |                                            */
+/*  local_0_start                                       \                                                   */
+/*  .                                                    |                                                  */
+/*  .                                                    |  process 1                                       */
+/*  local_0_start + local_Nx - 1                         |                                                  */
+/*  .                                                    |     | padding (internal fftw use only)           */
+/*  .                                                   /      |                                            */
+/*                                                                                                          */
+/*  .                                                          .                                            */
+/*  .                                                          .                                            */
+/*                                                                                                          */
+/*  (Nproc-1)*local_0_start  ... Ny/2                   \                                                   */
+/*  .                                               .    |                                                  */
+/*  .                                               .    |  process Nproc-1                                 */
+/*  (Nproc-1)*local_0_start + local_Nx - 1   ... Ny/2    |                                                  */
+/*  .                                                    |     | padding (internal fftw use only)           */
+/*  .                                                   /      |                                            */
+/*                                                                                                          */
+/*  TRANSPOSED OUTPUT (row-major ordered in memory):                                                        */
+/*                                                                                                          */
+/*  0 1 ...                                    ... Nx-1 \                                                   */
+/*  .                                                 .  |                                                  */
+/*  .                                                    |  process 0                                       */
+/*  local_Nyhpo - 1                                      |                                                  */
+/*  .                                                 .  |     | padding (internal fftw use only)           */
+/*  .                                                 . /      |                                            */
+/*  local_1_start                                     . \                                                   */
+/*  .                                                    |                                                  */
+/*  .                                                    |  process 1                                       */
+/*  local_1_start + local_Nyhpo - 1                      |                                                  */
+/*  .                                                    |     | padding (internal fftw use only)           */
+/*  .                                                   /      |                                            */
+/*                                                                                                          */
+/*  .                                                          .                                            */
+/*  .                                                          .                                            */
+/*                                                                                                          */
+/*  (Nproc-1)*local_1_start                           . \                                                   */
+/*  .                                                 .  |                                                  */
+/*  .                                                    |  process Nproc-1                                 */
+/*  (Nproc-1)*local_1_start + local_Nyhpo - 1  ... Nx-1  |                                                  */
+/*  .                                                    |   | padding (internal fftw use only)             */
+/*  .                                                   /    |                                              */
 #define FFT_TRANSPOSE 1
 
-#define NLevs 2 // Number of levels used in the HOS expansion.
-                // Particular cases are:
-                // Nlev=0 --> linear waves;
-                // Nlev=2 --> Zakharov equations.
+
+/*---------------------------------------------------------------------------------------------------------*/
+/* Number of levels used in the HOS expansion.                                                             */
+/* Particular cases are:                                                                                   */
+/* Nlev=0 --> linear waves;                                                                                */
+/* Nlev=2 --> Zakharov equations.                                                                          */
+#define NLevs 2
 
 
 ///////////////////////
