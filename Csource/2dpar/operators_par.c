@@ -229,10 +229,9 @@ void Sum(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hsum){
 
 void Dealias(fftw_complex* hu){
 
-    int mx, my;
-    
-    mx = floor( 0.5*Nx/(1 + 0.5*NLevs) );
-    my = floor( 0.5*Ny/(1 + 0.5*NLevs) );
+    //int mx, my;
+    //mx = floor( 0.5*Nx/(1 + 0.5*NLevs) );
+    //my = floor( 0.5*Ny/(1 + 0.5*NLevs) );
 
 #if FFT_TRANSPOSE == 0
     for (i=0; i<local_Nx; i++) {

@@ -99,13 +99,17 @@ double          Kx0;
 double          Ky0;
 double          g;
 
-
 double          T;
 double          dtsave;
 int             saveflg;    // =1 -> basic output, >1 -> extended output
 
 fftw_complex*   hetan;
 fftw_complex*   hphin;
+
+
+/* Size of dealiased complex arrays */
+ptrdiff_t       mx;
+ptrdiff_t       my;
 
 
 /* MPI related variables */

@@ -335,9 +335,6 @@ void write_field_2d(hid_t h5_file, double* eta, double* phi){
 }
 
 
-/* THESE NEED TO BE MADE GLOBAL */
-static ptrdiff_t mx, my;
-
 
 /* Function that checks whether the global index "index" lies inside (returns 0) or outside (returns 1) the dealiased region. */
 ptrdiff_t IsOutside(ptrdiff_t index){ return (index >= mx)*(index <= Nx-mx-1); };
@@ -387,9 +384,6 @@ void write_field_complex_2d(hid_t h5_file, const fftw_complex* heta, const fftw_
     count_0_gathered = malloc(mpi_size*sizeof(hsize_t));
     
     plist_id = H5Pcreate(H5P_DATASET_XFER);
-    
-    mx = floor( 0.5*Nx/(1 + 0.5*NLevs) );
-    my = floor( 0.5*Ny/(1 + 0.5*NLevs) );
     
     
     /* Untranpose data if FFT_TRANSPOSE == 1, by doing ifft and untransposed fft */

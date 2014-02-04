@@ -42,7 +42,8 @@ int main(int argc, char **argv)
     fftw_complex    *heta, *hphi;
     fftw_complex    *hvelwM, *hvelwM2, *hvelw2M, *hvelw2M2;
 
-    
+    /*-----------------------*/
+    /* Initialize MPI        */
     comm  = MPI_COMM_WORLD;
     info  = MPI_INFO_NULL;
 
@@ -57,24 +58,28 @@ int main(int argc, char **argv)
     MPI_Comm_size(comm, &mpi_size);
     MPI_Comm_rank(comm, &mpi_rank);
     
-    strncpy(init_pars_buff,"\0",INIT_DATA_BUFSIZE);
-    //strncpy(init_pars_buff, Sim_root, strlen(Sim_root));
-    strncpy(init_pars_buff,"initpars.h5", strlen("initpars.h5"));
     
+    
+    /*-------------------------*/
     /* Setup runtime data file */
     strncpy(runtime_data_buff,"\0",RUNTIME_DATA_BUFSIZE);
     strncpy(runtime_data_buff,"runtime.dat", strlen("runtime.dat"));
     runtime_fid = fopen(runtime_data_buff, "w+");
     fclose(runtime_fid);
     
-    
-    /* Read input parameters file */
+    /*-----------------------*/
+    /* Read input parameters */
+    strncpy(init_pars_buff,"\0",INIT_DATA_BUFSIZE);
+    strncpy(init_pars_buff,"initpars.h5", strlen("initpars.h5"));
     get_params(init_pars_buff);
     
-    snprintf(subid_buff, 2,"%d",runsubid);
     
+    
+    /*-----------------------*/
+    /* Setup file names      */
     strncpy(init_data_buff,"\0",INIT_DATA_BUFSIZE);
     strcat(init_data_buff,"initdata.");
+    snprintf(subid_buff, 2,"%d",runsubid);
     strcat(init_data_buff,subid_buff);
     strcat(init_data_buff,".h5");
     
@@ -105,15 +110,16 @@ int main(int argc, char **argv)
     fNy=Ny;
     
     
+
+    /*---------------------------------------------------------*/
+    /* Get local data size and allocate.                       */
+    /* NOTE: alloc_local can be greater than local_Nx*(Ny/2+1) */
 #if THREADS == 0
     fftw_mpi_init();
 #elif THREADS == 1
     if (threads_ok) threads_ok = fftw_init_threads();
 #endif
-    
-    
-    /* get local data size and allocate. */
-    /* NOTE: alloc_local can be greater than local_Nx*(Ny/2+1) */
+
 #if FFT_TRANSPOSE == 0
     alloc_local = fftw_mpi_local_size_2d(fNx, fNy/2+1, MPI_COMM_WORLD, &local_Nx, &local_0_start);
     local_N = local_Nx*(Ny/2 + 1);
@@ -146,8 +152,8 @@ int main(int argc, char **argv)
     hvelw2M  = fftw_alloc_complex(alloc_local);
     hvelw2M2 = fftw_alloc_complex(alloc_local);
     
-    
-    /* Setup fft routines */
+    /*--------------------*/
+    /* Setup fftw plans   */
 #if THREADS == 1
     if (threads_ok) fftw_plan_with_nthreads(N_THREADS);
 #endif
@@ -161,8 +167,13 @@ int main(int argc, char **argv)
     ifftp = fftw_mpi_plan_dft_c2r_2d(fNx, fNy, hf, f, MPI_COMM_WORLD, FFTW_MEASURE|FFTW_MPI_TRANSPOSED_IN);
 #endif
     
+    /* Size of the dealiased complex arrays */
+    mx = floor( 0.5*Nx/(1 + 0.5*NLevs) );
+    my = floor( 0.5*Ny/(1 + 0.5*NLevs) );
 
-    /* Read initial data */
+
+    /*--------------------*/
+    /* Read initial data  */
     get_ic_2d(init_data_buff, eta, phi);
 
     /* Setup temporal scheme. */
@@ -188,7 +199,7 @@ int main(int argc, char **argv)
     savefileid = create_file_2d(savefile_buff);
     write_header_2d(savefileid, t);
     //write_field_2d(savefileid, eta, phi);
-    write_field_complex_2d(savefileid, heta, hphi);
+	write_field_complex_2d(savefileid, heta, hphi);
     status = close_file_2d(savefileid);
     
     if (mpi_rank == 0) {
@@ -208,8 +219,9 @@ int main(int argc, char **argv)
         
     }
 
-    
-    /* Main time loop */
+
+    /*--------------------*/
+    /* Main time loop     */
     while (t<T-EPSILON) {
         
         t_old = t;
@@ -271,7 +283,8 @@ int main(int argc, char **argv)
     }
     
     
-    
+    /*------------------------*/
+    /* Clean up and finalize  */
     fftw_destroy_plan(fftp);
     fftw_destroy_plan(ifftp);
     free(eta);
