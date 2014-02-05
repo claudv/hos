@@ -2,16 +2,15 @@
 
     close all
 
-    SimFolder = '~/rw/hos_data/1';
+    SimFolder = '~/rw/hosdata/1';
 
-    N = 23;
-
-
+    N     = 23;
+    bound = 5;
 
     kurt  = zeros(1,N);
     skew  = zeros(1,N);
     t     = zeros(1,N);
-    edge  = -5:0.01:5;
+    edge  = -bound:0.01:bound;
     gauss = exp(-0.5*(edge.^2));
 
     for nfield=[0:1:N-1];
