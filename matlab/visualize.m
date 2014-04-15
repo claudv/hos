@@ -3,13 +3,8 @@
 close all
 
 
-figure(1)
-set(gcf,'Position',[50 100 1200 800]);
-set(gcf,'Color',[1 1 1]);
-figure(2)    
-set(gcf,'Position',[1400 100 800 1000]);
 
-SimFolder = '/Users/Claudio/rw/hos/data/1';
+SimFolder = '/Users/Claudio/rw/hos/data/demo';
 
 
 for nfield=[0:1:4000];
@@ -36,8 +31,13 @@ for nfield=[0:1:4000];
     x = Lx*(0:Nx-1)/Nx;
     y = Ly*(0:Ny-1)/Ny;
     
-    figure(1)
+    std(reshape(eta,Nx*Ny,1),1)
     
+    
+    figure(1)
+    set(gcf,'Position',[50 100 1200 800]);
+    set(gcf,'Color',[1 1 1]);
+  
     %subplot(2,1,1)
     surf(x,y,eta,'FaceColor','interp',...
 	         'EdgeColor','none',...
@@ -53,46 +53,49 @@ for nfield=[0:1:4000];
     axis tight
     camlight left
     view([15,40])
-    caxis([-8 8]);
+    caxis([-.1 .1]);
     
     
     % Get a frame if you want to create a movie later on.
     % Otherwise comment out the next line.
     %Movie(nfield+1) = getframe(gcf);
         
-    figure(2)
-    
-   
-    [ hetaD ] = FtoD( fftshift(fft2(eta.')), fftshift(fft2(phi.')), Kx, Ky, g );
-    SpectrumD = abs(hetaD);
-    SpectrumD = SpectrumD.';
-    
-    Spectrum = abs(fftshift(fft2(eta)));
-    
-    
-    subplot(3,1,1)
-    loglog(Kx,Spectrum(Ny/2+1,:))
-    
-    subplot(3,1,2)
-    imagesc(Kx,Ky,log10(Spectrum))
-    set(gca,'YDir','normal');
-    %hold on
-    %contour(Kx,Ky,log10(Spectrum),[3.8:-0.4:1],'k-')
-    caxis([-5 5]);
-    %axis([-3 3 -3 3]);
-    axis equal
-    grid on
-    colorbar
-    
-    subplot(3,1,3)
-    [ omega, theta ] = OmegaTheta( Kx, Ky, g);
-    [X,Y] = pol2cart(theta,omega);
-    contourf(X,Y,SpectrumD);
-    axis([-2 2 -2 2]);
-    %axis equal
-    axis square
-    grid on
-    colorbar
+%     figure(2)    
+%     set(gcf,'Position',[1400 100 800 1000]);
+%     
+%    
+%     [ hetaD ] = FtoD( fftshift(fft2(eta.')), fftshift(fft2(phi.')), Kx, Ky, g );
+%     SpectrumD = abs(hetaD);
+%     SpectrumD = SpectrumD.';
+%     SpectrumD = SpectrumD/max(max(abs(SpectrumD)));
+%    
+%     Spectrum = abs(fftshift(fft2(eta)));
+%     %Spectrum0 = Spectrum;
+%     Spectrum = Spectrum/max(max(abs(Spectrum)));
+%     
+%     subplot(3,1,1)
+%     loglog(Kx,Spectrum(Ny/2+1,:))
+%     
+%     subplot(3,1,2)
+%     imagesc(Kx,Ky,log10(Spectrum))
+%     set(gca,'YDir','normal');
+%     %hold on
+%     %contour(Kx,Ky,log10(Spectrum),[3.8:-0.4:1],'k-')
+%     caxis([-3 0]);
+%     axis([-12 12 -12 12]);
+%     axis equal
+%     grid on
+%     colorbar
+%     
+%     subplot(3,1,3)
+%     [ omega, theta ] = OmegaTheta( Kx, Ky, g);
+%     [X,Y] = pol2cart(theta,omega);
+%     contourf(X,Y,SpectrumD,[.1 .2 .3 .4 .5 .6 .7 .8 .9],'EdgeColor','None');
+%     axis([-10 10 -10 10]);
+%     %axis equal
+%     axis square
+%     grid on
+%     colorbar
     
     pause()
 

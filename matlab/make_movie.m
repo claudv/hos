@@ -7,6 +7,6 @@ writerObj = VideoWriter('movie.1','Motion JPEG AVI');
 writerObj.Quality = 75;			% Only with MPEG-4 or Motion JPEG AVI profile
 writerObj.FrameRate = 10;		% Frames per second
 open(writerObj);
-MovieSmall=Movie(:,1:2:end);
-writeVideo(writerObj,MovieSmall);
+%MovieSmall=Movie(:,1:2:end);
+writeVideo(writerObj,Movie);
 close(writerObj);

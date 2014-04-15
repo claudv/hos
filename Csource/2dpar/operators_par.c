@@ -266,3 +266,92 @@ void Dealias(fftw_complex* hu){
 #endif
 
 }
+
+
+/*---------------------------------------------------------------------*/
+double ij2kx(int i, int j){
+
+    double kx;
+
+#if FFT_TRANSPOSE == 0
+    if ( (local_0_start + i) <= (Nx/2 + 1) ) {
+                
+        kx = (local_0_start + i)*Kx0;
+            
+    }
+    else{
+            
+        kx = -(Nx - local_0_start - i)*Kx0;
+            
+    }
+#elif FFT_TRANSPOSE == 1
+    if ( i <= (Nx/2 + 1) ) {
+                
+        kx = i*Kx0;
+            
+    }
+    else{
+            
+        kx = -(Nx - i)*Kx0;
+            
+    }
+#endif
+
+    return kx;
+
+};
+
+
+/*---------------------------------------------------------------------*/
+/* Filter operator as implemented by Xiao et al. JFM 2013.             */
+void Filter(fftw_complex* hu, double k_peak, double fb1, double fb2){
+
+double kx, ky, kmod;
+ptrdiff_t index;
+
+#if FFT_TRANSPOSE == 0
+    for (i=0; i<local_Nx; i++) {
+        
+        for (j=0; j<Ny/2+1; j++) {
+            
+            kx = ij2kx(i,j);
+            ky = j*Ky0;
+            kmod = kx*kx;
+            kmod += ky*ky;
+            kmod = sqrt(kmod);
+    
+            index = (Ny/2+1)*i + j;
+            hu[index] *= exp( - pow(kmod/fb1/k_peak, fb2) );
+            
+        }
+        
+    }
+#elif FFT_TRANSPOSE == 1
+    for (j=0; j<local_Nyhpo; j++) {
+    
+        for (i=0; i<Nx; i++) {
+        
+            if ( i <= (Nx/2 + 1) ) {
+                
+                kx = i*Kx0;
+            
+            }
+            else{
+            
+                kx = -(Nx - i)*Kx0;
+            
+            }
+            ky = (local_1_start + j)*Ky0;
+            kmod = kx*kx;
+            kmod += ky*ky;
+            kmod = sqrt(kmod);
+
+            index = Nx*j + i;
+            hu[index] *= exp( - pow(kmod/fb1/k_peak, fb2) );
+        }
+        
+    }
+#endif
+
+};
+

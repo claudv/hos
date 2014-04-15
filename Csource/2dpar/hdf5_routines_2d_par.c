@@ -19,67 +19,89 @@ void get_params(char* filename){
     
     h5_file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
     
-    /* Nx */
+    /* Nx ----------------------------------------------------------------------*/
     h5_data = H5Dopen(h5_file, "/Nx", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
     
     Nx = (int) Nd[0];
     
-    /* Ny */
+    /* Ny ----------------------------------------------------------------------*/
     h5_data = H5Dopen(h5_file, "/Ny", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
     
     Ny = (int) Nd[0];
     
-    /* Lx */
+    /* Lx ----------------------------------------------------------------------*/
     h5_data = H5Dopen(h5_file, "/Lx", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Lx);
     
-    /* Ly */
+    /* Ly ----------------------------------------------------------------------*/
     h5_data = H5Dopen(h5_file, "/Ly", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Ly);
     
-    /* g  */
+    /* g  ----------------------------------------------------------------------*/
     h5_data = H5Dopen(h5_file, "/g", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &g);
     
-    /* runsubid */
+    /* runsubid ----------------------------------------------------------------*/
     h5_data = H5Dopen(h5_file, "/runsubid", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
 
     runsubid = (int) Nd[0];
 
-    /* T */
+    /* T -----------------------------------------------------------------------*/
     h5_data = H5Dopen(h5_file, "/T", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &T);
     
-    /* dtsave */
+    /* dtsave ------------------------------------------------------------------*/
     h5_data = H5Dopen(h5_file, "/dtsave", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &dtsave);
     
-    /* saveflg */
+    /* saveflg -----------------------------------------------------------------*/
     h5_data = H5Dopen(h5_file, "/saveflg", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
     
-    saveflg = (int) Nd[0];
+    saveflg = (flg_type) Nd[0];
     
-    /* rampflg */
+    /* rampflg -----------------------------------------------------------------*/
     h5_data = H5Dopen(h5_file, "/rampflg", H5P_DEFAULT);
     status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
     
-    rampflg = (int) Nd[0];
+    rampflg = (flg_type) Nd[0];
     
-    if ( rampflg!=0 && rampflg!=1 ) {
-    
-        printf("Illegal value assigned to rampflag, setting to default value (0).\n");
+    if ( rampflg!=0 && rampflg!=1 )
+    {
+        printf("Illegal value assigned to rampflg, setting to default value (0).\n");
         rampflg = 0;
-    
     }
     
-    /* Tramp */
-    h5_data = H5Dopen(h5_file, "/Tramp", H5P_DEFAULT);
-    status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Tramp);
-   
+    /* Tramp -------------------------------------------------------------------*/
+    if ( rampflg==1 )
+    {
+        h5_data = H5Dopen(h5_file, "/Tramp", H5P_DEFAULT);
+        status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Tramp);
+    }
+    
+    /* windflg -----------------------------------------------------------------*/
+    h5_data = H5Dopen(h5_file, "/windflg", H5P_DEFAULT);
+    status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Nd);
+    
+    windflg = (flg_type) Nd[0];
+    
+    if ( windflg!=0 && windflg!=1 )
+    {
+        printf("Illegal value assigned to windflg, setting to default value (0).\n");
+        windflg = 0;
+    }
+
+    /* Uwind ------------------------------------------------------------------*/
+    if ( windflg==1 )
+    {
+        h5_data = H5Dopen(h5_file, "/Uwind_x", H5P_DEFAULT);
+        status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Uwind_x);
+        h5_data = H5Dopen(h5_file, "/Uwind_y", H5P_DEFAULT);
+        status  = H5Dread(h5_data, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Uwind_y);
+    }
    
     status = H5Dclose(h5_data);
     status = H5Fclose(h5_file);
@@ -370,7 +392,7 @@ void write_field_complex_2d_init(){
 
 }
 
-
+/* Write wave field in HDF5 datafile. The processes which contain only dealiased wavenumbers do not write. */
 void write_field_complex_2d(hid_t h5_file, const fftw_complex* heta, const fftw_complex* phi){
     
 
@@ -380,10 +402,11 @@ void write_field_complex_2d(hid_t h5_file, const fftw_complex* heta, const fftw_
     hsize_t     dimsf[2], count[2], offset[2];
     ptrdiff_t   lbd, rbd; // local indexes of the left and right boundaries of the portion of the local complex array contained inside the dealiased region.
     
+    int         p_index;
+    
     hsize_t *   count_0_gathered;
     count_0_gathered = malloc(mpi_size*sizeof(hsize_t));
     
-    plist_id = H5Pcreate(H5P_DATASET_XFER);
     
     
     /* Untranpose data if FFT_TRANSPOSE == 1, by doing ifft and untransposed fft */
@@ -436,7 +459,7 @@ void write_field_complex_2d(hid_t h5_file, const fftw_complex* heta, const fftw_
     
     offset[0] = 0;
     
-    for (int p_index=0; p_index<mpi_rank; p_index++) {
+    for (p_index=0; p_index<mpi_rank; p_index++) {
     
         offset[0] += count_0_gathered[p_index];
     
@@ -447,7 +470,7 @@ void write_field_complex_2d(hid_t h5_file, const fftw_complex* heta, const fftw_
     /* Compute global size of the filespace */
     dimsf[0] = 0;
     
-    for (int p_index=0; p_index<mpi_size; p_index++) {
+    for (p_index=0; p_index<mpi_size; p_index++) {
     
         dimsf[0] += count_0_gathered[p_index];
         
@@ -457,7 +480,7 @@ void write_field_complex_2d(hid_t h5_file, const fftw_complex* heta, const fftw_
     
     //printf("process %d, dimsf %lld, count %lld, offset %lld \n",mpi_rank,dimsf[0],count[0],offset[0]);
     
-    /* heta */
+    /* heta_real */
     h5_filespace = H5Screate_simple(RANK, dimsf, NULL);
     h5_dataset = H5Dcreate(h5_file, "heta_r", H5T_IEEE_F64LE, h5_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Sclose(h5_filespace);
@@ -468,7 +491,6 @@ void write_field_complex_2d(hid_t h5_file, const fftw_complex* heta, const fftw_
     
     plist_id = H5Pcreate(H5P_DATASET_XFER);
     
-    /* Copy data inside a temporary array to remove padding, then write inside the datafile. */
     for (i=0; i<count[0]; i++) {
         
         for (j=0; j<my; j++) {
@@ -486,36 +508,39 @@ void write_field_complex_2d(hid_t h5_file, const fftw_complex* heta, const fftw_
     H5Sclose(h5_memspace);
     H5Pclose(plist_id);
     
-//    // hphi //
-//    h5_filespace = H5Screate_simple(RANK, dimsf, NULL);
-//    h5_dataset = H5Dcreate(h5_file, "phi", H5T_IEEE_F64LE, h5_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-//    H5Sclose(h5_filespace);
-//    
-//    h5_memspace = H5Screate_simple(RANK, count, NULL);
-//
-//    h5_filespace = H5Dget_space(h5_dataset);
-//    H5Sselect_hyperslab(h5_filespace, H5S_SELECT_SET, offset, NULL, count, NULL);
-//    
-//    plist_id = H5Pcreate(H5P_DATASET_XFER);
-//    
-//    /* Copy data inside a temporary array to remove padding, then write inside the datafile */
-//    for (i=0; i<local_Nx; i++) {
-//        
-//        for (j=0; j<Ny; j++) {
-//            
-//            temp1[Ny*i + j] = phi[(Ny+2)*i + j];
-//            
-//        }
-//        
-//    }
-//    
-//    status = H5Dwrite(h5_dataset, H5T_IEEE_F64LE, h5_memspace, h5_filespace, plist_id, temp1);
-//       
-//    H5Dclose(h5_dataset);
-//    H5Sclose(h5_filespace);
-//    H5Sclose(h5_memspace);
-//    H5Pclose(plist_id);
+    /* heta_imag */
+    h5_filespace = H5Screate_simple(RANK, dimsf, NULL);
+    h5_dataset = H5Dcreate(h5_file, "heta_i", H5T_IEEE_F64LE, h5_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Sclose(h5_filespace);
+
+    h5_memspace = H5Screate_simple(RANK, count, NULL);
+    h5_filespace = H5Dget_space(h5_dataset);
+    H5Sselect_hyperslab(h5_filespace, H5S_SELECT_SET, offset, NULL, count, NULL);
     
+    plist_id = H5Pcreate(H5P_DATASET_XFER);
+    
+    for (i=0; i<count[0]; i++) {
+        
+        for (j=0; j<my; j++) {
+            
+            temp1[my*i + j] = cimag(htemp1[(Ny/2+1)*i + j]);
+        
+        }
+        
+    }
+    
+    status = H5Dwrite(h5_dataset, H5T_IEEE_F64LE, h5_memspace, h5_filespace, plist_id, temp1);
+   
+    H5Dclose(h5_dataset);
+    H5Sclose(h5_filespace);
+    H5Sclose(h5_memspace);
+    H5Pclose(plist_id);
+    
+    /* hphi_real */
+    // ..... //
+    
+    /* hphi_imag */
+    // ..... //
     
 }
 

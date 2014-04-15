@@ -11,18 +11,18 @@ clear all
 close all
 
 
-T = 1800;			% Final simulation time
-dtsave = 60;		% Save snapshots every dtsave interval
-saveflg = 1;		% 1:standard ouput, 2:extra output
+T = 10;			% Final simulation time
+dtsave = .04;		% Save snapshots every dtsave interval
+saveflg = 2;		% 1:standard ouput, 2:extra output
 g=9.8;			% Gravity constant
 
 runsubid=1;		% You can label your run with this ID
 
-Lx = 2000;	% Domain size in x
-Ly = 2000;	% Domain size in y
+Lx = 4*pi;	% Domain size in x
+Ly = 4*pi;	% Domain size in y
 
-Nx = 4096/4;		% Number of Fourier modes in x
-Ny = 4096/4;		% Number of Fourier modes in y
+Nx = 512;		% Number of Fourier modes in x
+Ny = 512;		% Number of Fourier modes in y
 
 kx = 2*pi/Lx*[-Nx/2:Nx/2-1];
 ky = 2*pi/Ly*[-Ny/2:Ny/2-1];
@@ -35,8 +35,8 @@ switch SpectrumType
     case('Fourier')
     
 	% Gaussian spectrum UNSCALED!
-	k_p = 2*pi/150;
-	delta_k = 0.2;
+	k_p = 1;
+	delta_k = 0.01;
 	epsilon = 0.1;
 	sigma = epsilon/sqrt(2)/k_p;
 
@@ -45,13 +45,16 @@ switch SpectrumType
 	[KX, KY] = meshgrid(kx,ky);
 	KA = abs(KX + 1i*KY);
 
-        % good practice to reshuffle rng to avoid bad suprises
+    % good practice to reshuffle rng to avoid bad suprises
 	rng('shuffle');
 
 
-	% SURFACE ELEVATION %%%%%%%%%%%%%
+	% SURFACE ELEVATION -----------------------------%
 	hetar = sqrt(Pk(KX,KY)).*exp(1i*2*pi*rand(Ny,Nx));
-
+    %hetar = zeros(Ny,Nx);
+    %hetar(Ny/2+1+2,Nx/2+1+1)=1;
+    %hetar(Ny/2+1+2,Nx/2+1+2)=0.0001;
+    
 	% put Nyquist freqs equal zero
 	hetar(:,1) = 0;
 	hetar(1,:) = 0;
@@ -62,10 +65,9 @@ switch SpectrumType
 	% make it Hermitian
 	hetar(2:Ny/2,Nx/2+1) = conj(flipud(hetar(Ny/2+2:end,Nx/2+1)));
 	hetar(2:end,2:Nx/2)  = conj(rot90(hetar(2:end,Nx/2+2:end),2));
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%------------------------------------------------%
 
-
-	% VELOCITY POTENTIAL %%%%%%%%%%%%
+	% VELOCITY POTENTIAL ----------------------------%
 	% We choose right-going waves
 	hphir = zeros(Ny,Nx);
 
@@ -78,8 +80,9 @@ switch SpectrumType
 	hphir(2:end,2:Nx/2)  = conj(rot90(hphir(2:end,Nx/2+2:end),2));
 
 	hphir(Ny/2+1,Nx/2+1) = 0;
+    %------------------------------------------------%
 
-case('Directional')
+    case('Directional')
 
 	% Setting free surface variance.
 	sigma = 8.38/4;
@@ -214,8 +217,8 @@ set(gca,'YDir','normal');
 %%% Write hdf5 datafile
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%SimFolder = '/Users/Claudio/rw/hos/data/1/';
-SimFolder = '/Users/Claudio/rw/hos/Csource/2dpar/';
+SimFolder = '/Users/Claudio/rw/hos/data/demo/';
+%SimFolder = '/Users/Claudio/rw/hos/Csource/2dpar/';
 
 hdf5File  = [SimFolder, 'initpars.h5'];
 unix(['rm ', hdf5File]);
@@ -252,6 +255,15 @@ h5write(hdf5File, '/rampflg', 0);
 
 h5create(hdf5File,'/Tramp',[1 1]);
 h5write(hdf5File, '/Tramp', 60);
+
+h5create(hdf5File,'/windflg',[1 1]);
+h5write(hdf5File, '/windflg', 1);
+
+h5create(hdf5File,'/Uwind_x',[1 1]);
+h5write(hdf5File, '/Uwind_x', 1.1);
+
+h5create(hdf5File,'/Uwind_y',[1 1]);
+h5write(hdf5File, '/Uwind_y', 0.4);
 
 
 hdf5File  = [SimFolder, 'initdata.',num2str(runsubid),'.h5'];

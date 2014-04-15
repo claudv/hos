@@ -19,6 +19,7 @@ static fftw_complex*   hw2M;
 static fftw_complex*   hw2M2;
 static double*         Coeff;
 
+static fftw_complex*   hwindpress;
 
 void rhs_test(fftw_complex* hrhs, fftw_complex* hu){
 
@@ -60,6 +61,8 @@ void rhs_hos_setup(){
     
     }
     
+    hwindpress = fftw_alloc_complex(alloc_local);
+    
 }
 
 
@@ -69,7 +72,7 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
     ptrdiff_t index, index_shift;
   
     
-    /********************/
+    /*------------------*/
     /* RHS for phi part */
     
     /* eta_x*phi_x + eta_y*phi_y */
@@ -103,7 +106,7 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
     Sum(hrhs, htemp2, hrhs);
 
 
-    /********************/
+    /*------------------*/
     /* RHS for phi part */
     Mult(htemp1, hw2M2, htemp2);   /* W2^(M-2)*(eta_x*eta_x + eta_y*eta_y) --> htemp2  */
     Sum(hw2M, htemp2, htemp2);     /* W2^(M-2)*(eta_x*eta_x + eta_y*eta_y) + W2^(M) --> htemp2  */
@@ -124,7 +127,8 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
     Dy(&hu[alloc_local], htemp2);
     Mult(htemp2, htemp2, htemp2);
     
-    Sum(htemp1, htemp2, htemp1);   /* phi_x*phi_x + phi_y*phi_y --> htemp1  */
+    /* phi_x*phi_x + phi_y*phi_y --> htemp1  */
+    Sum(htemp1, htemp2, htemp1);
     
     for (i=0; i<local_N; i++) {
         
@@ -134,19 +138,23 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
 
     }
 
-    /* Dommermuth initialiation shceme ************************/
+
+    /* Dommermuth initialiation scheme -----------------------*/
     /* Multiply nonlinear part of rhs by ramping coefficient. */
-    if (rampflg==1){
+    if (rampflg==1)
+    {
     
         ZvelLinear(hu, htemp1);
 
-        for (i=0; i<local_N; i++) {
+        for (i=0; i<local_N; i++)
+        {
             hrhs[i] = hrhs[i] - htemp1[i];
             hrhs[i] = RampFun(t)*hrhs[i];
             hrhs[i] = hrhs[i] + htemp1[i];
         }
     
-        for (i=0; i<local_N; i++) {
+        for (i=0; i<local_N; i++)
+        {
             index_shift = i + alloc_local;
             hrhs[index_shift] = hrhs[index_shift] + g*hu[i];
             hrhs[index_shift] = RampFun(t)*hrhs[index_shift];
@@ -154,8 +162,12 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
         }
     
     }
+
+    /* External forcing, directly added to hrhs --------------*/
+    if (windflg==1)
+        Wind(hu, hu, hrhs);
     
-    /* Dealiasing */
+    /* Dealiasing --------------------------------------------*/
     Dealias(hrhs);
     Dealias(&hrhs[alloc_local]);
     
@@ -354,20 +366,19 @@ double Hamiltonian(const fftw_complex* heta, const fftw_complex* heta_t, const f
     H = 0.0;
         
     /* j=0 */
-    for (i=0; i < Nx; i++) {
-            
+    for (i=0; i < Nx; i++)
+    {
         H += g*creal(heta[i])*creal(heta[i]);
         H += g*cimag(heta[i])*cimag(heta[i]);
 
         H += creal(hphi[i])*creal(heta_t[i]);
         H += cimag(hphi[i])*cimag(heta_t[i]);
-        
     }
     
-    for (j=1; j<local_Nyhpo; j++) {
-    
-        for (i=0; i < Nx; i++) {
-            
+    for (j=1; j<local_Nyhpo; j++)
+    {
+        for (i=0; i < Nx; i++)
+        {
             index = Nx*j + i;
 
             H += 2*g*creal(heta[index])*creal(heta[index]);
@@ -375,9 +386,7 @@ double Hamiltonian(const fftw_complex* heta, const fftw_complex* heta_t, const f
 
             H += 2*creal(hphi[index])*creal(heta_t[index]);
             H += 2*cimag(hphi[index])*cimag(heta_t[index]);
-
         }
-        
     }
     
     return H;
@@ -390,4 +399,27 @@ double RampFun(const double t){
     return ( 1 - exp(-t*t/Tramp/Tramp) );
 
 }
+
+/* Add wind forcing to rhs */
+void Wind(const fftw_complex* hu, const fftw_complex* hut, fftw_complex* hrhs){
+
+    ptrdiff_t i;
+    ptrdiff_t index_shift;
+
+    /* implemetation of wind pressure */
+    for (i=0; i<local_N; i++)
+    {
+        hwindpress[i] = 0.4*hu[i];
+    }
+    
+    /* Adding wind pressure to hrhs */
+    for (i=0; i<local_N; i++)
+    {
+        index_shift = i + alloc_local;
+        hrhs[index_shift] = hrhs[index_shift] + hwindpress[i];
+    }
+
+}
+
+
 

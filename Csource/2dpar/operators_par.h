@@ -23,4 +23,5 @@ void Dz(const fftw_complex* hu, fftw_complex* hu_z);
 void Mult(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hprod);
 void Sum(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hsum);
 void Dealias(fftw_complex* hu);
+void Filter(fftw_complex* hu, double k_peak, double fb1, double fb2);
 

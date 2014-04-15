@@ -6,6 +6,9 @@
 //  Copyright (c) 2013 Claudio Viotti. All rights reserved.
 //
 
+// pending maintenance issues:
+//  -find a better arrangement for global temporary arrays
+
 #define DIM 3
 #define BUFSIZE 256
 #define INIT_DATA_BUFSIZE 128
@@ -28,6 +31,7 @@
    int threads_ok;
 #endif
 
+
 int main(int argc, char **argv)
 {
     
@@ -35,15 +39,27 @@ int main(int argc, char **argv)
     int         scheme_flg, nfld;
     double      *eta, *phi;
     double      *velwM, *velwM2;
+    double      *eta_t;
     //double      *velw2M, *velw2M2;
     double      t, dt, t_old;
-    char        init_data_buff[INIT_DATA_BUFSIZE], init_pars_buff[INIT_DATA_BUFSIZE], subid_buff[2], nfld_buff[5], dtflag[20];
+    char        init_data_buff[INIT_DATA_BUFSIZE];
+    char        init_pars_buff[INIT_DATA_BUFSIZE];
+    char        savefile_buff[SAVE_FILE_BUFSIZE];
+    char        savefile2_buff[SAVE_FILE_BUFSIZE];
+    
+    herr_t      status;
+    
+    char        subid_buff[2], nfld_buff[5], dtflag[20];
     
     fftw_complex    *heta, *hphi;
     fftw_complex    *hvelwM, *hvelwM2, *hvelw2M, *hvelw2M2;
+    fftw_complex    *heta_t;
 
-    /*-----------------------*/
-    /* Initialize MPI        */
+    hid_t       savefileid;
+    hid_t       savefileid2;
+
+    /*-----------------------------------------------------*/
+    /* Initialize MPI                                      */
     comm  = MPI_COMM_WORLD;
     info  = MPI_INFO_NULL;
 
@@ -58,25 +74,21 @@ int main(int argc, char **argv)
     MPI_Comm_size(comm, &mpi_size);
     MPI_Comm_rank(comm, &mpi_rank);
     
-    
-    
-    /*-------------------------*/
-    /* Setup runtime data file */
+    /*-----------------------------------------------------*/
+    /* Setup runtime data file                             */
     strncpy(runtime_data_buff,"\0",RUNTIME_DATA_BUFSIZE);
     strncpy(runtime_data_buff,"runtime.dat", strlen("runtime.dat"));
     runtime_fid = fopen(runtime_data_buff, "w+");
     fclose(runtime_fid);
     
-    /*-----------------------*/
-    /* Read input parameters */
+    /*----------------------------------------------------*/
+    /* Read input parameters                              */
     strncpy(init_pars_buff,"\0",INIT_DATA_BUFSIZE);
     strncpy(init_pars_buff,"initpars.h5", strlen("initpars.h5"));
     get_params(init_pars_buff);
     
-    
-    
-    /*-----------------------*/
-    /* Setup file names      */
+    /*----------------------------------------------------*/
+    /* Setup file names                                   */
     strncpy(init_data_buff,"\0",INIT_DATA_BUFSIZE);
     strcat(init_data_buff,"initdata.");
     snprintf(subid_buff, 2,"%d",runsubid);
@@ -135,6 +147,9 @@ int main(int argc, char **argv)
     eta = fftw_alloc_real(4 * alloc_local);
     heta = fftw_alloc_complex(2 * alloc_local);
 
+    eta_t = fftw_alloc_real(4 * alloc_local);
+    heta_t = fftw_alloc_complex(2 * alloc_local);
+
     phi = &eta[2 * alloc_local];
     hphi = &heta[alloc_local];
 
@@ -167,7 +182,7 @@ int main(int argc, char **argv)
     ifftp = fftw_mpi_plan_dft_c2r_2d(fNx, fNy, hf, f, MPI_COMM_WORLD, FFTW_MEASURE|FFTW_MPI_TRANSPOSED_IN);
 #endif
     
-    /* Size of the dealiased complex arrays */
+    /* Size of the dealiased region */
     mx = floor( 0.5*Nx/(1 + 0.5*NLevs) );
     my = floor( 0.5*Ny/(1 + 0.5*NLevs) );
 
@@ -176,6 +191,7 @@ int main(int argc, char **argv)
     /* Read initial data  */
     get_ic_2d(init_data_buff, eta, phi);
 
+    /*------------------------*/
     /* Setup temporal scheme. */
     scheme_flg=2;
     Setup_TimeScheme(scheme_flg);
@@ -188,19 +204,18 @@ int main(int argc, char **argv)
     
     Dealias(heta);
     Dealias(hphi);
-
-    Zvel(heta, hvelwM, hvelwM2, hvelw2M, hvelw2M2, t);
-    
-    ifft_2d(hvelwM, velwM, ifftp);
-    ifft_2d(hvelwM2, velwM2, ifftp);
     
     
     /* Save initial snapshot */
     savefileid = create_file_2d(savefile_buff);
     write_header_2d(savefileid, t);
-    //write_field_2d(savefileid, eta, phi);
-	write_field_complex_2d(savefileid, heta, hphi);
+    write_field_2d(savefileid, eta, phi);
     status = close_file_2d(savefileid);
+    
+    //savefileid2 = create_file_2d(savefile2_buff);
+	//write_header_2d(savefileid, t);
+    //write_field_complex_2d(savefileid2, heta, hphi);
+    //status = close_file_2d(savefileid2);
     
     if (mpi_rank == 0) {
             printf("Datafile '%s' written at t=%f\n",savefile_buff,t);
@@ -208,9 +223,17 @@ int main(int argc, char **argv)
     
     
     if (saveflg > 1) {
+    
+        rhs_hos(heta_t, heta, t);
+        ifft_2d(heta_t, eta_t, ifftp);
+        //Zvel(heta, hvelwM, hvelwM2, hvelw2M, hvelw2M2, t);
+        //ifft_2d(hvelwM, velwM, ifftp);
+        //ifft_2d(hvelwM2, velwM2, ifftp);
+    
         savefileid2 = create_file_2d(savefile2_buff);
         write_header_2d(savefileid2, t);
-        write_extra_2d(savefileid2, velwM, velwM2);
+        //write_extra_2d(savefileid2, velwM, velwM2);
+        write_extra_2d(savefileid2, eta_t, &eta_t[2 * alloc_local]);
         status = close_file_2d(savefileid2);
         
         if (mpi_rank == 0) {
@@ -218,19 +241,20 @@ int main(int argc, char **argv)
         }
         
     }
-
-
+    
     /*--------------------*/
     /* Main time loop     */
     while (t<T-EPSILON) {
         
         t_old = t;
         
-        dt = 0.2;
+        dt = 0.02;
         
         sol_update_RK(heta,&t,dt,dtflag);
-        //t = t + dt;
-    
+        
+        Filter(heta, 4.0, 8.0, 30.0);
+        Filter(hphi, 4.0, 8.0, 30.0);
+     
     
         if ( floor(t*(1+EPSILON)/dtsave) > floor(t_old*(1+EPSILON)/dtsave) ){
             
@@ -267,9 +291,12 @@ int main(int argc, char **argv)
                 strcat(savefile2_buff,subid_buff);
                 strcat(savefile2_buff,".h5");
 
+                rhs_hos(heta_t, heta, t);
+                ifft_2d(heta_t, eta_t, ifftp);
+        
                 savefileid2 = create_file_2d(savefile2_buff);
                 write_header_2d(savefileid2, t);
-                write_extra_2d(savefileid2, velwM, velwM2);
+                write_extra_2d(savefileid2, eta_t, &eta_t[2 * alloc_local]);
                 status = close_file_2d(savefileid2);
                 
                 if (mpi_rank==0) {

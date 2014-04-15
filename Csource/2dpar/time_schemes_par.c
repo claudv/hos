@@ -96,9 +96,6 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
                 htemp[alloc_local + i] = htemp[alloc_local + i] + dt*b[s][p]*fun[2*alloc_local*p + alloc_local + i];
 
             }
- 
-
-
             
         }
      

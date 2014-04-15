@@ -6,6 +6,9 @@
 //  Copyright (c) 2013 Claudio Viotti. All rights reserved.
 //
 
+#ifndef EULER_H
+#define EULER_H
+ 
 
 #include<stdlib.h>
 #include<stdio.h>
@@ -83,12 +86,13 @@
 /* Nlev=2 --> Zakharov equations.                                                                          */
 #define NLevs 2
 
+typedef unsigned char flg_type;
 
-///////////////////////
-/* Global variables. */
+/*--------------------------------------*/
+/* Global variables --------------------*/
 
 
-/* Main parameters */
+/* Main parameters ---------------------*/
 int             Nx;
 int             Ny;
 //ptrdiff_t       N;
@@ -101,36 +105,32 @@ double          g;
 
 double          T;
 double          dtsave;
-int             saveflg;    // =1 -> basic output, >1 -> extended output
+flg_type        saveflg;    // =1 -> basic output, >1 -> extended output
 
 fftw_complex*   hetan;
 fftw_complex*   hphin;
 
 
-/* Size of dealiased complex arrays */
+/* Size of dealiased complex arrays ---*/
 ptrdiff_t       mx;
 ptrdiff_t       my;
 
 
-/* MPI related variables */
+/* MPI related variables --------------*/
 int         mpi_size;
 int         mpi_rank;
 MPI_Comm    comm;
 MPI_Info    info;
 
 
-/* Dommermuth ramping */
-int         rampflg;
+/* Dommermuth ramping -----------------*/
+flg_type    rampflg;
 double      Tramp;
 
-
-/* Definitions global for debugging pourpose */
-hid_t       savefileid;
-hid_t       savefileid2;
-char        savefile_buff[SAVE_FILE_BUFSIZE];
-char        savefile2_buff[SAVE_FILE_BUFSIZE];
-herr_t      status;
-
+/* Wind forcing -----------------------*/
+flg_type    windflg;
+double      Uwind_x;
+double      Uwind_y;
 
 /* Global arrays for temporary storage */
 double*         temp1;
@@ -139,9 +139,10 @@ fftw_complex*   htemp1;
 fftw_complex*   htemp2;
 
 
-/* Runtime datafile */
+/* Runtime datafile -----------------*/
 char        runtime_data_buff[RUNTIME_DATA_BUFSIZE];
 FILE*       runtime_fid;
 double      Ham;
 double      Ham_glob;
 
+#endif /* EULER_H */

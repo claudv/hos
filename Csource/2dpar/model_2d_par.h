@@ -22,3 +22,5 @@ void ZvelLinear(const fftw_complex* hu, fftw_complex* hZvelLinear);
 
 double Hamiltonian(const fftw_complex* heta, const fftw_complex* heta_t, const fftw_complex* hphi);
 double RampFun(const double t);
+
+void Wind(const fftw_complex* hu, const fftw_complex* hut, fftw_complex* hrhs);
