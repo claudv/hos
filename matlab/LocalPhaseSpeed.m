@@ -34,7 +34,7 @@ function [ CPlus, CMinus, LambdaPlus, LambdaMinus, XPlusx, XPlusy, XMinusx, XMin
     
     
     
-    Pxy = real(ifft2(hWW.*heta_x_times_eta_y))/numel(hWW);
+    Pxy = real(ifft2(hWW.*heta_x_times_eta_y));
     Pxx = real(ifft2(hWW.*heta_x_times_eta_x));
     Pyy = real(ifft2(hWW.*heta_y_times_eta_y));
     Pxt = real(ifft2(hWW.*heta_x_times_eta_t));
@@ -72,6 +72,10 @@ function [ CPlus, CMinus, LambdaPlus, LambdaMinus, XPlusx, XPlusy, XMinusx, XMin
     XMinusx = Sign.*XMinusx;
     XMinusy = Sign.*XMinusy;
     CMinus = Sign.*CMinus;
+    
+    % rescale eigenvalues --------------------------------------%
+    %LambdaPlus = LambdaPlus/numel(Pxx);
+    %LambdaMinus = LambdaMinus/numel(Pxx);
     
 end
 

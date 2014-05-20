@@ -6,8 +6,11 @@
 //  Copyright (c) 2013 Claudio Viotti. All rights reserved.
 //
 
-// pending maintenance issues:
-//  -find a better arrangement for global temporary arrays
+/*============================================================
+ pending maintenance issues:
+  -find a better arrangement for global scratchwork arrays
+  -f and hf should not be visible outside fft_routines_2d_par.c
+============================================================*/
 
 #define DIM 3
 #define BUFSIZE 256
@@ -22,6 +25,7 @@
 
 #include "fft_routines_2d_par.h"
 #include "hdf5_routines_2d_par.h"
+#include "global_params.h"
 #include "model_2d_par.h"
 #include "time_schemes_par.h"
 #include "operators_par.h"
@@ -35,12 +39,13 @@
 int main(int argc, char **argv)
 {
     
-    
     int         scheme_flg, nfld;
     double      *eta, *phi;
-    double      *velwM, *velwM2;
-    double      *eta_t;
+    //double      *velwM, *velwM2;
     //double      *velw2M, *velw2M2;
+    double      *eta_t;
+    double      *press;
+    
     double      t, dt, t_old;
     char        init_data_buff[INIT_DATA_BUFSIZE];
     char        init_pars_buff[INIT_DATA_BUFSIZE];
@@ -52,12 +57,13 @@ int main(int argc, char **argv)
     char        subid_buff[2], nfld_buff[5], dtflag[20];
     
     fftw_complex    *heta, *hphi;
-    fftw_complex    *hvelwM, *hvelwM2, *hvelw2M, *hvelw2M2;
+    //fftw_complex    *hvelwM, *hvelwM2, *hvelw2M, *hvelw2M2;
     fftw_complex    *heta_t;
+    fftw_complex    *hpress;
 
     hid_t       savefileid;
     hid_t       savefileid2;
-
+    
     /*-----------------------------------------------------*/
     /* Initialize MPI                                      */
     comm  = MPI_COMM_WORLD;
@@ -85,7 +91,14 @@ int main(int argc, char **argv)
     /* Read input parameters                              */
     strncpy(init_pars_buff,"\0",INIT_DATA_BUFSIZE);
     strncpy(init_pars_buff,"initpars.h5", strlen("initpars.h5"));
-    get_params(init_pars_buff);
+    get_global_params(init_pars_buff);
+    
+    if (mpi_rank==0)
+    {
+        printf("windflg = %d\n",windflg);
+        if(windflg==1)
+            printf("Uwind_x = %lf, Uwind_y = %lf\n",Uwind_x,Uwind_y);
+    }
     
     /*----------------------------------------------------*/
     /* Setup file names                                   */
@@ -95,9 +108,9 @@ int main(int argc, char **argv)
     strcat(init_data_buff,subid_buff);
     strcat(init_data_buff,".h5");
     
-    if (mpi_rank==0) {
+    if (mpi_rank==0)
         printf("Reading initial data from:\t%s\n",init_data_buff);
-    }
+    
     MPI_Barrier(comm);
    
     nfld = 0;
@@ -150,6 +163,9 @@ int main(int argc, char **argv)
     eta_t = fftw_alloc_real(4 * alloc_local);
     heta_t = fftw_alloc_complex(2 * alloc_local);
 
+    press = fftw_alloc_real(2 * alloc_local);
+    hpress = fftw_alloc_complex(alloc_local);
+
     phi = &eta[2 * alloc_local];
     hphi = &heta[alloc_local];
 
@@ -158,21 +174,20 @@ int main(int argc, char **argv)
     
     
     temp1 = fftw_alloc_real(2 * alloc_local);
-    velwM    = fftw_alloc_real(2 * alloc_local);
-    velwM2   = fftw_alloc_real(2 * alloc_local);
+    //velwM    = fftw_alloc_real(2 * alloc_local);
+    //velwM2   = fftw_alloc_real(2 * alloc_local);
     //velw2M   = fftw_alloc_real(2 * alloc_local);
     //velw2M2  = fftw_alloc_real(2 * alloc_local);
-    hvelwM   = fftw_alloc_complex(alloc_local);
-    hvelwM2  = fftw_alloc_complex(alloc_local);
-    hvelw2M  = fftw_alloc_complex(alloc_local);
-    hvelw2M2 = fftw_alloc_complex(alloc_local);
+    //hvelwM   = fftw_alloc_complex(alloc_local);
+    //hvelwM2  = fftw_alloc_complex(alloc_local);
+    //hvelw2M  = fftw_alloc_complex(alloc_local);
+    //hvelw2M2 = fftw_alloc_complex(alloc_local);
     
-    /*--------------------*/
-    /* Setup fftw plans   */
+    /*------------------------------------------------*/
+    /* Setup fftw plans                               */
 #if THREADS == 1
     if (threads_ok) fftw_plan_with_nthreads(N_THREADS);
 #endif
-    
     
 #if FFT_TRANSPOSE == 0
     fftp = fftw_mpi_plan_dft_r2c_2d(fNx, fNy, f, hf, MPI_COMM_WORLD, FFTW_MEASURE);
@@ -181,18 +196,13 @@ int main(int argc, char **argv)
     fftp = fftw_mpi_plan_dft_r2c_2d(fNx, fNy, f, hf, MPI_COMM_WORLD, FFTW_MEASURE|FFTW_MPI_TRANSPOSED_OUT);
     ifftp = fftw_mpi_plan_dft_c2r_2d(fNx, fNy, hf, f, MPI_COMM_WORLD, FFTW_MEASURE|FFTW_MPI_TRANSPOSED_IN);
 #endif
-    
-    /* Size of the dealiased region */
-    mx = floor( 0.5*Nx/(1 + 0.5*NLevs) );
-    my = floor( 0.5*Ny/(1 + 0.5*NLevs) );
 
-
-    /*--------------------*/
-    /* Read initial data  */
+    /*------------------------------------*/
+    /* Read initial data                  */
     get_ic_2d(init_data_buff, eta, phi);
 
-    /*------------------------*/
-    /* Setup temporal scheme. */
+    /*------------------------------------*/
+    /* Setup temporal scheme.             */
     scheme_flg=2;
     Setup_TimeScheme(scheme_flg);
     rhs_hos_setup();
@@ -205,7 +215,6 @@ int main(int argc, char **argv)
     Dealias(heta);
     Dealias(hphi);
     
-    
     /* Save initial snapshot */
     savefileid = create_file_2d(savefile_buff);
     write_header_2d(savefileid, t);
@@ -217,15 +226,16 @@ int main(int argc, char **argv)
     //write_field_complex_2d(savefileid2, heta, hphi);
     //status = close_file_2d(savefileid2);
     
-    if (mpi_rank == 0) {
+    if (mpi_rank == 0)
             printf("Datafile '%s' written at t=%f\n",savefile_buff,t);
-    }
     
     
-    if (saveflg > 1) {
-    
+    if (saveflg > 1)
+    {
         rhs_hos(heta_t, heta, t);
         ifft_2d(heta_t, eta_t, ifftp);
+        Wind(heta, heta_t, hpress);
+        ifft_2d(hpress, press, ifftp);
         //Zvel(heta, hvelwM, hvelwM2, hvelw2M, hvelw2M2, t);
         //ifft_2d(hvelwM, velwM, ifftp);
         //ifft_2d(hvelwM2, velwM2, ifftp);
@@ -233,19 +243,17 @@ int main(int argc, char **argv)
         savefileid2 = create_file_2d(savefile2_buff);
         write_header_2d(savefileid2, t);
         //write_extra_2d(savefileid2, velwM, velwM2);
-        write_extra_2d(savefileid2, eta_t, &eta_t[2 * alloc_local]);
+        write_extra_2d(savefileid2, eta_t, press);
         status = close_file_2d(savefileid2);
         
-        if (mpi_rank == 0) {
+        if (mpi_rank == 0)
             printf("Datafile '%s' written at t=%f\n",savefile2_buff,t);
-        }
-        
     }
     
     /*--------------------*/
     /* Main time loop     */
-    while (t<T-EPSILON) {
-        
+    while (t<T-EPSILON)
+    {
         t_old = t;
         
         dt = 0.02;
@@ -256,12 +264,11 @@ int main(int argc, char **argv)
         Filter(hphi, 4.0, 8.0, 30.0);
      
     
-        if ( floor(t*(1+EPSILON)/dtsave) > floor(t_old*(1+EPSILON)/dtsave) ){
-            
+        if ( floor(t*(1+EPSILON)/dtsave) > floor(t_old*(1+EPSILON)/dtsave) )
+        {
             nfld = nfld + 1;
             ifft_2d(heta, eta, ifftp);
             ifft_2d(hphi, phi, ifftp);
-            
             
             /* Print field in output file */
             strncpy(savefile_buff,"\0",SAVE_FILE_BUFSIZE);
@@ -277,11 +284,11 @@ int main(int argc, char **argv)
             write_field_2d(savefileid, eta, phi);
             status = close_file_2d(savefileid);
             
-            if (mpi_rank==0) {
+            if (mpi_rank==0)
                 printf("Datafile '%s' written at t=%f\n",savefile_buff,t);
-            }
             
-            if (saveflg > 1) {
+            if (saveflg > 1)
+            {
             
                 strncpy(savefile2_buff,"\0",SAVE_FILE_BUFSIZE);
                 strcat(savefile2_buff,"data_extra");
@@ -293,20 +300,19 @@ int main(int argc, char **argv)
 
                 rhs_hos(heta_t, heta, t);
                 ifft_2d(heta_t, eta_t, ifftp);
+                Wind(heta, heta_t, hpress);
+                ifft_2d(hpress, press, ifftp);
         
                 savefileid2 = create_file_2d(savefile2_buff);
                 write_header_2d(savefileid2, t);
-                write_extra_2d(savefileid2, eta_t, &eta_t[2 * alloc_local]);
+                write_extra_2d(savefileid2, eta_t, press);
                 status = close_file_2d(savefileid2);
                 
-                if (mpi_rank==0) {
+                if (mpi_rank==0)
                     printf("Datafile '%s' written at t=%f\n",savefile2_buff,t);
-                }
 
             }
-            
         }
-        
     }
     
     

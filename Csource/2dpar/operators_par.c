@@ -9,9 +9,10 @@
 #include "operators_par.h"
 
 /* Spectral x-derivative */
-void Dx(fftw_complex* hu, fftw_complex* hu_x){
+void Dx(const fftw_complex* hu, fftw_complex* hu_x){
 
-
+    assert(hu!=hu_x);
+    
     double kx;
     ptrdiff_t index;
 
@@ -66,8 +67,10 @@ void Dx(fftw_complex* hu, fftw_complex* hu_x){
 
 
 /* Spectral y-derivative */
-void Dy(fftw_complex* hu, fftw_complex* hu_y){
+void Dy(const fftw_complex* hu, fftw_complex* hu_y){
 
+    assert(hu!=hu_y);
+    
     double ky;
     ptrdiff_t index;
     
@@ -103,7 +106,6 @@ void Dy(fftw_complex* hu, fftw_complex* hu_y){
 
 /* Spectral z-derivative for deep water */
 void Dz(const fftw_complex* hu, fftw_complex* hu_z){
-
 
     ptrdiff_t index;
     double kx, ky, kz;

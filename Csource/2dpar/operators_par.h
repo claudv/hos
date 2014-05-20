@@ -16,10 +16,18 @@
 
 #endif
 
+/* Spectral x-derivative -------------------------*/
+/* In-place excution is currently NOT allowed     */
+void Dx(const fftw_complex* hu, fftw_complex* hu_x);
 
-void Dx(fftw_complex* hu, fftw_complex* hu_x);
-void Dy(fftw_complex* hu, fftw_complex* hu_y);
+/* Spectral y-derivative -------------------------*/
+/* In-place excution is currently NOT allowed     */
+void Dy(const fftw_complex* hu, fftw_complex* hu_y);
+
+/* Spectral z-derivative for deep water ----------*/
+/* In-place excution is currently allowed         */
 void Dz(const fftw_complex* hu, fftw_complex* hu_z);
+
 void Mult(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hprod);
 void Sum(fftw_complex* hu1, fftw_complex* hu2, fftw_complex* hsum);
 void Dealias(fftw_complex* hu);

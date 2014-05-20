@@ -25,33 +25,11 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
     
     for (s=0; s<Nstages; s++) {
     
-        
-//        for (i=0; i<local_Nx; i++) {
-//    
-//            for (j=0; j<Ny/2+1; j++) {
-//            
-//                htemp[(Ny/2+1)*i + j]=u[(Ny/2+1)*i + j];
-//            
-//            }
-//        
-//        }
-
         for (i=0; i<local_N; i++) {
             
                 htemp[i]=u[i];
 
         }
-
-
-//        for (i=0; i<local_Nx; i++) {
-//    
-//            for (j=0; j<Ny/2+1; j++) {
-//            
-//                htemp[alloc_local + (Ny/2+1)*i + j]=u[alloc_local + (Ny/2+1)*i + j];
-//            
-//            }
-//        
-//        }
 
         for (i=0; i<local_N; i++) {
             
@@ -61,36 +39,13 @@ void sol_update_RK(fftw_complex* u,double* t,double dt,char* dtflag){
         
         
         for (p=0; p<s; p++) {
-            
-//            for (i=0; i<local_Nx; i++) {
-//                
-//                for (j=0; j<Ny/2+1; j++) {
-//                    
-//                    htemp[(Ny/2+1)*i + j] = htemp[(Ny/2+1)*i + j] + dt*b[s][p]*fun[2*alloc_local*p + (Ny/2+1)*i + j];
-//                    
-//                }
-//                
-//            }
-            
-
+        
             for (i=0; i<local_N; i++) {
             
                 htemp[i] = htemp[i] + dt*b[s][p]*fun[2*alloc_local*p + i];
 
             }
             
-            
-//            for (i=0; i<local_Nx; i++) {
-//                
-//                for (j=0; j<Ny/2+1; j++) {
-//                    
-//                    htemp[alloc_local + (Ny/2+1)*i + j] = htemp[alloc_local +(Ny/2+1)*i + j] + dt*b[s][p]*fun[2*alloc_local*p + alloc_local + (Ny/2+1)*i + j];
-//                    
-//                }
-//                
-//            }
-
-
             for (i=0; i<local_N; i++) {
             
                 htemp[alloc_local + i] = htemp[alloc_local + i] + dt*b[s][p]*fun[2*alloc_local*p + alloc_local + i];

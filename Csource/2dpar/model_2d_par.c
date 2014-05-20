@@ -19,8 +19,6 @@ static fftw_complex*   hw2M;
 static fftw_complex*   hw2M2;
 static double*         Coeff;
 
-static fftw_complex*   hwindpress;
-
 void rhs_test(fftw_complex* hrhs, fftw_complex* hu){
 
     // Linear advection
@@ -34,13 +32,10 @@ void rhs_hos_setup(){
 
     int n;
     
-//    eta_x = fftw_alloc_real(2 * alloc_local);
-//    phi_x = fftw_alloc_real(2 * alloc_local);
-    
     temp1 = fftw_alloc_real(2 * alloc_local);
     temp2 = fftw_alloc_real(2 * alloc_local);
-    htemp1 = fftw_alloc_complex(alloc_local);
-    htemp2 = fftw_alloc_complex(alloc_local);
+    htemp1 = fftw_alloc_complex(2 * alloc_local);
+    htemp2 = &htemp1[alloc_local];
     
     hetan = fftw_alloc_complex((NLevs+1)*alloc_local);
     hphin = fftw_alloc_complex((NLevs+1)*alloc_local);
@@ -55,13 +50,10 @@ void rhs_hos_setup(){
     Coeff[0] = 1.0;
     Coeff[1] = 1.0;
     
-    for (n=2; n<=NLevs; n++) {
-    
+    for (n=2; n<=NLevs; n++)
+    {
         Coeff[n] = Coeff[n-1]*n;
-    
     }
-    
-    hwindpress = fftw_alloc_complex(alloc_local);
     
 }
 
@@ -73,7 +65,7 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
   
     
     /*------------------*/
-    /* RHS for phi part */
+    /* RHS for eta part */
     
     /* eta_x*phi_x + eta_y*phi_y */
     Dx(hu, htemp1);
@@ -84,10 +76,9 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
     Dy(&hu[alloc_local], htemp2);
     Mult(htemp1, htemp2, htemp1);
         
-    for (i=0; i<local_N; i++) {
-        
+    for (i=0; i<local_N; i++)
+    {
         hrhs[i] = - hrhs[i] - htemp1[i];
-            
     }
 
     /* Vertical velocity */
@@ -111,13 +102,11 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
     Mult(htemp1, hw2M2, htemp2);   /* W2^(M-2)*(eta_x*eta_x + eta_y*eta_y) --> htemp2  */
     Sum(hw2M, htemp2, htemp2);     /* W2^(M-2)*(eta_x*eta_x + eta_y*eta_y) + W2^(M) --> htemp2  */
     
-    for (i=0; i<local_N; i++) {
-        
-        index = i;
-        index_shift = index + alloc_local;
-        hrhs[index_shift] = -g*hu[index];
-        hrhs[index_shift] = hrhs[index_shift] + 0.5*htemp2[index];
-
+    for (i=0; i<local_N; i++)
+    {
+        index_shift = i + alloc_local;
+        hrhs[index_shift] = -g*hu[i];
+        hrhs[index_shift] = hrhs[index_shift] + 0.5*htemp2[i];
     }
         
     /* -0.5*(phi_x*phi_x + phi_y*phi_y) */
@@ -130,12 +119,11 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
     /* phi_x*phi_x + phi_y*phi_y --> htemp1  */
     Sum(htemp1, htemp2, htemp1);
     
-    for (i=0; i<local_N; i++) {
-        
+    for (i=0; i<local_N; i++)
+    {
         index = i;
         index_shift = index + alloc_local;
         hrhs[index_shift] = hrhs[index_shift] - 0.5*htemp1[index];
-
     }
 
 
@@ -143,33 +131,45 @@ void rhs_hos(fftw_complex* hrhs, fftw_complex* hu, double t){
     /* Multiply nonlinear part of rhs by ramping coefficient. */
     if (rampflg==1)
     {
-    
         ZvelLinear(hu, htemp1);
 
         for (i=0; i<local_N; i++)
         {
-            hrhs[i] = hrhs[i] - htemp1[i];
-            hrhs[i] = RampFun(t)*hrhs[i];
-            hrhs[i] = hrhs[i] + htemp1[i];
+            hrhs[i] -= htemp1[i];
+            hrhs[i] *= RampFun(t);
+            hrhs[i] += htemp1[i];
         }
     
         for (i=0; i<local_N; i++)
         {
             index_shift = i + alloc_local;
-            hrhs[index_shift] = hrhs[index_shift] + g*hu[i];
-            hrhs[index_shift] = RampFun(t)*hrhs[index_shift];
-            hrhs[index_shift] = hrhs[index_shift] - g*hu[i];
+            hrhs[index_shift] += g*hu[i];
+            hrhs[index_shift] *= RampFun(t);
+            hrhs[index_shift] -= g*hu[i];
         }
-    
     }
-
-    /* External forcing, directly added to hrhs --------------*/
-    if (windflg==1)
-        Wind(hu, hu, hrhs);
     
     /* Dealiasing --------------------------------------------*/
     Dealias(hrhs);
     Dealias(&hrhs[alloc_local]);
+    
+    /* External forcing, directly added to hrhs --------------*/
+    //if (windflg==1)
+        //Wind(hu, hrhs, &hrhs[alloc_local]);
+    static fftw_complex * hwindpress =  NULL;
+    if (hwindpress==NULL && windflg==1)
+        hwindpress = fftw_alloc_complex(alloc_local);
+    
+    if (windflg==1)
+    {
+        Wind(hu, hrhs, hwindpress);
+        
+        for (i=0; i<local_N; i++)
+        {
+            index_shift = i + alloc_local;
+            hrhs[index_shift] -= hwindpress[i];
+        }
+    }
     
 }
 
@@ -401,23 +401,67 @@ double RampFun(const double t){
 }
 
 /* Add wind forcing to rhs */
-void Wind(const fftw_complex* hu, const fftw_complex* hut, fftw_complex* hrhs){
+void Wind(const fftw_complex* hu, const fftw_complex* hut, fftw_complex* hwindpress){
 
-    ptrdiff_t i;
-    ptrdiff_t index_shift;
-
+    ptrdiff_t i,j,index;
+    
+    static double * uWindRelX =  NULL;
+    if (uWindRelX==NULL)
+        uWindRelX = fftw_alloc_real(2*alloc_local);
+    
+    static double * uWindRelY =  NULL;
+    if (uWindRelY==NULL)
+        uWindRelY = fftw_alloc_real(2*alloc_local);
+    
+    
     /* implemetation of wind pressure */
-    for (i=0; i<local_N; i++)
+    
+    // replace this block with the actual computation //
+    for (i=0; i<local_Nx; i++)
     {
-        hwindpress[i] = 0.4*hu[i];
+        for (j=0; j<Ny; j++)
+        {
+            index = (Ny + 2)*i + j;
+            uWindRelX[index] = Uwind_x;
+            uWindRelY[index] = Uwind_y;
+        }
+    }
+    ///////////////////////////////////////////////////
+    
+    
+    Dx(hu, htemp1);
+    ifft_2d(htemp1, temp1, ifftp);
+    for (i=0; i<local_Nx; i++)
+    {
+        for (j=0; j<Ny; j++)
+        {
+            index = (Ny + 2)*i + j;
+            temp2[index] = uWindRelX[index]*temp1[index];
+        }
     }
     
-    /* Adding wind pressure to hrhs */
-    for (i=0; i<local_N; i++)
+    Dy(hu, htemp1);
+    ifft_2d(htemp1, temp1, ifftp);
+    for (i=0; i<local_Nx; i++)
     {
-        index_shift = i + alloc_local;
-        hrhs[index_shift] = hrhs[index_shift] + hwindpress[i];
+        for (j=0; j<Ny; j++)
+        {
+            index = (Ny + 2)*i + j;
+            temp2[index] += uWindRelY[index]*temp1[index];
+        }
     }
+    
+    for (i=0; i<local_Nx; i++)
+    {
+        for (j=0; j<Ny; j++)
+        {
+            index = (Ny + 2)*i + j;
+            temp2[index] *= sqrt(uWindRelX[index]*uWindRelX[index] + uWindRelY[index]*uWindRelY[index]);
+            temp2[index] *= 0.002;
+        }
+    }
+    
+    fft_2d(temp2, hwindpress, fftp);
 
 }
 

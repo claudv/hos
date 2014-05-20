@@ -11,15 +11,15 @@ clear all
 close all
 
 
-T = 10;			% Final simulation time
-dtsave = .04;		% Save snapshots every dtsave interval
+T = 600;			% Final simulation time
+dtsave = 10;		% Save snapshots every dtsave interval
 saveflg = 2;		% 1:standard ouput, 2:extra output
 g=9.8;			% Gravity constant
 
 runsubid=1;		% You can label your run with this ID
 
-Lx = 4*pi;	% Domain size in x
-Ly = 4*pi;	% Domain size in y
+Lx = 16*pi;	% Domain size in x
+Ly = 16*pi;	% Domain size in y
 
 Nx = 512;		% Number of Fourier modes in x
 Ny = 512;		% Number of Fourier modes in y
@@ -36,7 +36,7 @@ switch SpectrumType
     
 	% Gaussian spectrum UNSCALED!
 	k_p = 1;
-	delta_k = 0.01;
+	delta_k = 0.2;
 	epsilon = 0.1;
 	sigma = epsilon/sqrt(2)/k_p;
 
@@ -52,8 +52,8 @@ switch SpectrumType
 	% SURFACE ELEVATION -----------------------------%
 	hetar = sqrt(Pk(KX,KY)).*exp(1i*2*pi*rand(Ny,Nx));
     %hetar = zeros(Ny,Nx);
-    %hetar(Ny/2+1+2,Nx/2+1+1)=1;
-    %hetar(Ny/2+1+2,Nx/2+1+2)=0.0001;
+    %hetar(Ny/2+1+1,Nx/2+1+1)=1;
+    %hetar(Ny/2+1-1,Nx/2+1+1)=1;
     
 	% put Nyquist freqs equal zero
 	hetar(:,1) = 0;
@@ -247,7 +247,7 @@ h5write(hdf5File, '/dtsave', dtsave);
 h5create(hdf5File,'/saveflg',[1 1]);
 h5write(hdf5File, '/saveflg', saveflg);
 
-h5create(hdf5File,'/runsubid',[1 1]);
+h5create(hdf5File,'/runsubid',[1 1]);  
 h5write(hdf5File, '/runsubid', runsubid);
 
 h5create(hdf5File,'/rampflg',[1 1]);
@@ -260,10 +260,10 @@ h5create(hdf5File,'/windflg',[1 1]);
 h5write(hdf5File, '/windflg', 1);
 
 h5create(hdf5File,'/Uwind_x',[1 1]);
-h5write(hdf5File, '/Uwind_x', 1.1);
+h5write(hdf5File, '/Uwind_x', 0.0);
 
 h5create(hdf5File,'/Uwind_y',[1 1]);
-h5write(hdf5File, '/Uwind_y', 0.4);
+h5write(hdf5File, '/Uwind_y', 2.0);
 
 
 hdf5File  = [SimFolder, 'initdata.',num2str(runsubid),'.h5'];

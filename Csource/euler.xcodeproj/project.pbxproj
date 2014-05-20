@@ -13,6 +13,7 @@
 		CA318801181923FC005ED3E2 /* fft_routines_2d.c in Sources */ = {isa = PBXBuildFile; fileRef = CA3187C218154DBA005ED3E2 /* fft_routines_2d.c */; };
 		CAA2F4D2182288020038714A /* operators.c in Sources */ = {isa = PBXBuildFile; fileRef = CAA2F4CC182286BC0038714A /* operators.c */; };
 		CAA2F4D31822880A0038714A /* time_schemes.c in Sources */ = {isa = PBXBuildFile; fileRef = CAA2F4CF182287D00038714A /* time_schemes.c */; };
+		CAAF119119067A6400129547 /* global_params.c in Sources */ = {isa = PBXBuildFile; fileRef = CAAF118E19066C3500129547 /* global_params.c */; };
 		CAEF97AF1821203E00668F57 /* main_2d_par.c in Sources */ = {isa = PBXBuildFile; fileRef = CAEF97AC1821203E00668F57 /* main_2d_par.c */; };
 		CAEF97B01821203E00668F57 /* model_2d_par.c in Sources */ = {isa = PBXBuildFile; fileRef = CAEF97AD1821203E00668F57 /* model_2d_par.c */; };
 		CAEF97B31821205000668F57 /* fft_routines_2d_par.c in Sources */ = {isa = PBXBuildFile; fileRef = CAEF97B11821205000668F57 /* fft_routines_2d_par.c */; };
@@ -50,13 +51,15 @@
 		CA3187C618154DBA005ED3E2 /* main_2d.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main_2d.c; path = 2d/main_2d.c; sourceTree = "<group>"; };
 		CA3187C718154DBA005ED3E2 /* model_2d.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = model_2d.c; path = 2d/model_2d.c; sourceTree = "<group>"; };
 		CA3187C818154DBA005ED3E2 /* model_2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = model_2d.h; path = 2d/model_2d.h; sourceTree = "<group>"; };
-		CA90D8FA189FA68E0024E7A2 /* euler_2d_par */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = euler_2d_par; sourceTree = BUILT_PRODUCTS_DIR; };
-		CA90D8FB189FA68E0024E7A2 /* euler_2d */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = euler_2d; sourceTree = BUILT_PRODUCTS_DIR; };
+		CA90D8FA189FA68E0024E7A2 /* euler_2d_par */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = euler_2d_par; path = /Users/Claudio/rw/hos/Csource/2dpar/euler_2d_par; sourceTree = "<absolute>"; };
+		CA90D8FB189FA68E0024E7A2 /* euler_2d */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = euler_2d; path = /Users/Claudio/rw/hos/Csource/2d/euler_2d; sourceTree = "<absolute>"; };
 		CAA2F4CB182286AB0038714A /* euler_2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = euler_2d.h; path = 2d/euler_2d.h; sourceTree = "<group>"; };
 		CAA2F4CC182286BC0038714A /* operators.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = operators.c; path = 2d/operators.c; sourceTree = "<group>"; };
 		CAA2F4CD182286BC0038714A /* operators.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = operators.h; path = 2d/operators.h; sourceTree = "<group>"; };
 		CAA2F4CF182287D00038714A /* time_schemes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = time_schemes.c; path = 2d/time_schemes.c; sourceTree = "<group>"; };
 		CAA2F4D0182287D00038714A /* time_schemes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = time_schemes.h; path = 2d/time_schemes.h; sourceTree = "<group>"; };
+		CAAF118E19066C3500129547 /* global_params.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = global_params.c; sourceTree = "<group>"; };
+		CAAF119019066C4C00129547 /* global_params.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = global_params.h; sourceTree = "<group>"; };
 		CAEF97AB1821203E00668F57 /* euler_2d_par.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = euler_2d_par.h; path = 2dpar/euler_2d_par.h; sourceTree = "<group>"; };
 		CAEF97AC1821203E00668F57 /* main_2d_par.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main_2d_par.c; path = 2dpar/main_2d_par.c; sourceTree = "<group>"; usesTabs = 0; wrapsLines = 1; };
 		CAEF97AD1821203E00668F57 /* model_2d_par.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = model_2d_par.c; path = 2dpar/model_2d_par.c; sourceTree = "<group>"; };
@@ -122,13 +125,6 @@
 			name = euler2d_parallel;
 			sourceTree = "<group>";
 		};
-		CA54C4F918607F32006DE72E /* targets */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = targets;
-			sourceTree = "<group>";
-		};
 		CA95311916E8E2480003890B = {
 			isa = PBXGroup;
 			children = (
@@ -138,9 +134,6 @@
 				CA0D3E30178D69C50054C0F8 /* operators */,
 				CA18C03A17859BE2008A82C8 /* time_step */,
 				CACC6D4D17788C3500306F11 /* hdf5 */,
-				CA54C4F918607F32006DE72E /* targets */,
-				CA90D8FA189FA68E0024E7A2 /* euler_2d_par */,
-				CA90D8FB189FA68E0024E7A2 /* euler_2d */,
 			);
 			sourceTree = "<group>";
 		};
@@ -173,6 +166,8 @@
 				CAEF97BB1821207B00668F57 /* hdf5_routines_2d_par.h */,
 				CA3187C418154DBA005ED3E2 /* hdf5_routines_2d.c */,
 				CA3187C518154DBA005ED3E2 /* hdf5_routines_2d.h */,
+				CAAF118E19066C3500129547 /* global_params.c */,
+				CAAF119019066C4C00129547 /* global_params.h */,
 			);
 			name = hdf5;
 			sourceTree = "<group>";
@@ -260,6 +255,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CAEF97AF1821203E00668F57 /* main_2d_par.c in Sources */,
+				CAAF119119067A6400129547 /* global_params.c in Sources */,
 				CAEF97B01821203E00668F57 /* model_2d_par.c in Sources */,
 				CAEF97B31821205000668F57 /* fft_routines_2d_par.c in Sources */,
 				CAEF97B61821205E00668F57 /* operators_par.c in Sources */,
@@ -426,6 +422,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CONFIGURATION_BUILD_DIR = 2dpar/;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				HEADER_SEARCH_PATHS = (
 					/usr/local/include/,
 					"/usr/local/hdf5-1.8.11/hdf5/include",

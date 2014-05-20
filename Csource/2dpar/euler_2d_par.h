@@ -13,6 +13,7 @@
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
+#include<assert.h>
 #include<tgmath.h>
 #include<fftw3-mpi.h>
 
@@ -91,30 +92,48 @@ typedef unsigned char flg_type;
 /*--------------------------------------*/
 /* Global variables --------------------*/
 
+/* 
+In the reader routine global variables are initialized,
+therefore they are included as non-constants by defining
+global_params_reader before header inclusion. They should 
+be constant anywhere else.
+THIS APPROACH COULD BE UNSAFE--UNDER TESTING 
+*/
+#ifdef global_params_reader
+#define __TYPE__QUAL__ extern
+#else
+#define __TYPE__QUAL__ const
+#endif
 
-/* Main parameters ---------------------*/
-int             Nx;
-int             Ny;
-//ptrdiff_t       N;
-int             runsubid;
-double          Lx;
-double          Ly;
-double          Kx0;
-double          Ky0;
-double          g;
+__TYPE__QUAL__ int          Nx;
+__TYPE__QUAL__ int          Ny;
+__TYPE__QUAL__ int          runsubid;
+__TYPE__QUAL__ double       Lx;
+__TYPE__QUAL__ double       Ly;
+__TYPE__QUAL__ double       Kx0;
+__TYPE__QUAL__ double       Ky0;
+__TYPE__QUAL__ double       g;
 
-double          T;
-double          dtsave;
-flg_type        saveflg;    // =1 -> basic output, >1 -> extended output
+__TYPE__QUAL__ double       T;
+__TYPE__QUAL__ double       dtsave;
+__TYPE__QUAL__ flg_type     saveflg;    // =1 -> basic output, >1 -> extended output
+
+/* Dommermuth ramping -----------------*/
+__TYPE__QUAL__ flg_type    rampflg;
+__TYPE__QUAL__ double      Tramp;
+
+/* Wind forcing -----------------------*/
+__TYPE__QUAL__ flg_type    windflg;
+__TYPE__QUAL__ double      Uwind_x;
+__TYPE__QUAL__ double      Uwind_y;
+
+/* Size of dealiased complex arrays ---*/
+__TYPE__QUAL__ ptrdiff_t   mx;
+__TYPE__QUAL__ ptrdiff_t   my;
+
 
 fftw_complex*   hetan;
 fftw_complex*   hphin;
-
-
-/* Size of dealiased complex arrays ---*/
-ptrdiff_t       mx;
-ptrdiff_t       my;
-
 
 /* MPI related variables --------------*/
 int         mpi_size;
@@ -122,27 +141,17 @@ int         mpi_rank;
 MPI_Comm    comm;
 MPI_Info    info;
 
-
-/* Dommermuth ramping -----------------*/
-flg_type    rampflg;
-double      Tramp;
-
-/* Wind forcing -----------------------*/
-flg_type    windflg;
-double      Uwind_x;
-double      Uwind_y;
-
 /* Global arrays for temporary storage */
 double*         temp1;
 double*         temp2;
 fftw_complex*   htemp1;
 fftw_complex*   htemp2;
 
-
 /* Runtime datafile -----------------*/
 char        runtime_data_buff[RUNTIME_DATA_BUFSIZE];
 FILE*       runtime_fid;
 double      Ham;
 double      Ham_glob;
+
 
 #endif /* EULER_H */

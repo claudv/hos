@@ -11,7 +11,6 @@
 
 #ifndef euler_fft_routines_h
 #define euler_fft_routines_h
-#endif
 
 /* FFT-related global variables */
 double          *f;
@@ -35,3 +34,5 @@ void fft_2d(const double* u, fftw_complex* hu, fftw_plan plan);
 void ifft_2d(const fftw_complex* hu, double* u, fftw_plan plan);
 void fft_2d_large(double* u, fftw_complex* hu, fftw_plan plan);
 void ifft_2d_large(fftw_complex* hu, double* u, fftw_plan plan);
+
+#endif /*euler_fft_routines_h*/

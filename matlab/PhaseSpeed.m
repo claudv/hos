@@ -38,7 +38,10 @@ heta_t = fft2(eta_t);
 %hW=ifftshift(hW);
 %W = real(ifft2(hW));
 %W=ones(size(eta));
+
+% eta aurocorrelation function
 W=real(ifft2(heta.*conj(heta)));
+
 %W=real(ifft2(heta_x.*conj(heta_t)));
 
 % eta smoothed ----------------------------------------%
@@ -63,7 +66,6 @@ figure(1)
 set(gcf,'Position',[50 100 1200 800]);
 set(gcf,'Color',[1 1 1]);
 
-
 surf(x,y,eta,'FaceColor','interp',...
          'EdgeColor','none',...
          'FaceLighting','phong')
@@ -72,6 +74,7 @@ ylabel('y','Fontsize',24,'FontName','Times')
 zlabel('Surface','Fontsize',24,'FontName','Times')
 title(['t=' num2str(time)],'Fontsize',24,'FontName','Times')
 
+colormap('Gray');
 set(gca,'Fontsize',24,'FontName','Times')
 %axis equal
 daspect([5 5 1])
@@ -110,22 +113,46 @@ view([15,40])
 
 figure(3)
 
+%set(cga,'FontSize',15);
+
 stride=40;
 [X, Y] = meshgrid(x(1:stride:end),y(1:stride:end));
 
-subplot(2,1,1)
+subplot(2,2,1)
+set(gca,'FontSize',16)
 imagesc([0 Lx],[0 Ly], CPlus)
 colorbar
 set(gca,'YDir','normal');
 hold on
 quiver(X,Y,XPlusx(1:stride:end,1:stride:end),...
            XPlusy(1:stride:end,1:stride:end),1)
-
-subplot(2,1,2)
+title('c^+');
+       
+       
+subplot(2,2,2)
+set(gca,'FontSize',16)
 imagesc([0 Lx],[0 Ly], CMinus)
 colorbar
 set(gca,'YDir','normal');
 hold on
+
 quiver(X,Y,XMinusx(1:stride:end,1:stride:end),...
            XMinusy(1:stride:end,1:stride:end),2)
+title('c^-');
+
+subplot(2,2,3)
+set(gca,'FontSize',16)
+imagesc([0 Lx],[0 Ly], LambdaPlus)
+colorbar
+caxis([0 max(max(LambdaPlus))]);
+set(gca,'YDir','normal');
+title('\lambda^+');
+
+subplot(2,2,4)
+set(gca,'FontSize',16)
+imagesc([0 Lx],[0 Ly], LambdaMinus)
+colorbar
+caxis([0 max(max(LambdaMinus))]);
+set(gca,'YDir','normal');
+title('\lambda^-');
 
